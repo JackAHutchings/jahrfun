@@ -1,6 +1,4 @@
-windowsFonts(CenturySch=windowsFont(family="Century Schoolbook"))
-windowsFonts(Times=windowsFont(family="Times New Roman"))
-options(scipen=999)
+
 
 #' Round all numeric entries in a data frame
 #' @export

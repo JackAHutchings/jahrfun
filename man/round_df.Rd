@@ -2,10 +2,10 @@
 % Please edit documentation in R/misc_functions.R
 \name{round_df}
 \alias{round_df}
-\title{Round all numeric entries in a data frame.}
+\title{Round all numeric entries in a data frame}
 \usage{
 round_df(df, digits)
 }
 \description{
-Round all numeric entries in a data frame.
+Round all numeric entries in a data frame
 }
