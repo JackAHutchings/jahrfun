@@ -1,0 +1,15 @@
+Package: jahrfun
+Title: JAH Miscellaneous R Functions
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Jack",
+           family = "Hutchings",
+           role = c("aut", "cre"),
+           email = "jahutch2@gmail.com",
+           comment = c(ORCID = "0000-0003-3396-6787"))
+Description: Various functions with a focus on various balanced bootstrap approaches, including a custom ggplot2 linear model geom (geom_lmboot).
+License: What license it uses
+Encoding: UTF-8
+LazyData: true
+Depends: dplyr, ggplot2, readxl, writexl, data.table, tidyr, tibble, stringr, cowplot, ggrepel, scales, zoo, gtable, grid, broom, lubridate, lemon
+RoxygenNote: 7.1.0
