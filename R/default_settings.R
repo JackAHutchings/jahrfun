@@ -7,8 +7,6 @@ jah_settings <- function(){
 
   base_font_size = 8 # Default Font size in points.
   base_font_family = "Times" # Default font family.
-  unit <- function(...,units="mm"){grid::unit(...,units=units)} #Set default units to mm
-  margin <- function(...,unit="mm"){ggplot2::margin(...,unit=unit)} #Same as above, but for the margin comment.
 
   theme_set(theme(line = element_line(color="black",size=0.25,linetype=1,lineend="butt",arrow=F,inherit.blank=T),
                   rect = element_rect(fill=NA,color="black",size=0.25,linetype=1,inherit.blank=T),
@@ -88,3 +86,10 @@ jah_settings <- function(){
                   complete = T,
                   validate = T))
 }
+
+#' Change the default unit to mm
+#' @export
+unit <- function(units="mm",...){grid::unit(units=units,...)} #Set default units to mm
+#' Change the default unit to mm
+#' @export
+margin <- function(unit="mm",...){ggplot2::margin(unit=unit,...)} #Same as above, but for the margin comment.
