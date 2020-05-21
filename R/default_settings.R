@@ -89,7 +89,10 @@ jah_settings <- function(){
 
 #' Change the default unit to mm
 #' @export
-unit <- function(...,units="mm"){grid::unit(units=units,...)} #Set default units to mm
+unit <- function(...,units="mm"){grid::unit(units=units,...)}
+
 #' Change the default unit to mm
 #' @export
-margin <- function(...,unit="mm"){ggplot2::margin(unit=unit,...)} #Same as above, but for the margin comment.
+margin <- function(...,unit="mm"){ggplot2::margin(unit=unit,...)}
+
+
