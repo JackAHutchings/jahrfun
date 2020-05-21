@@ -1,4 +1,4 @@
-#jah_ggplot_theme
+#' Define a Windows font, set scipen options, and define JAH's default ggplot theme.
 #' @export
 jah_settings <- function(){
   windowsFonts(Times=windowsFont(family="Times New Roman"))
