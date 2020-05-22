@@ -6,6 +6,11 @@
 \usage{
 mean_ci_dist(x, ci = 95)
 }
+\arguments{
+\item{x}{Dataset, a numerical vector.}
+
+\item{ci}{Width of the confidence interval in percents. Defaults to 95.}
+}
 \description{
 Calculate the mean and confidence intervals of a distribution - output designed for stat_summary in ggplot
 }
