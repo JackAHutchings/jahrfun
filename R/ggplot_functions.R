@@ -215,7 +215,6 @@ GeomLMBoot <- ggproto("GeomLMBoot",Geom,
 #' @param coef.digits Number of digits to round to in the fit label.
 #' @param nudge_x Manual X-axis adjustment of the text. In plotting units (where plotting area ranges from 0 to 1).
 #' @param nudge_y Manual Y-axis adjustment of the text. In plotting units (where plotting area ranges from 0 to 1).
-#'
 #' @section Aesthetics:
 #' The geom understands the following aesthetics (required are in bold):
 #' \itemize{
@@ -224,7 +223,6 @@ GeomLMBoot <- ggproto("GeomLMBoot",Geom,
 #' \item xsd (Vector with length 1 or equal to X. If present, used as the SD term of an rnorm call for each X value during bootstrapping)
 #' \item ysd (Vector with length 1 or equal to Y. If present, used as the SD term of an rnorm call for each Y value during bootstrapping)
 #' }
-#'
 #' @export
 geom_lmboot <- function(mapping = NULL,
                         data = NULL,
