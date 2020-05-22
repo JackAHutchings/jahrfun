@@ -1,6 +1,7 @@
 #' @export
 GeomLMBoot <- ggproto("GeomLMBoot",Geom,
                       required_aes = c("x","y"),
+                      optional_aes = c("xsd","ysd"),
                       default_aes = aes(colour = "black", linetype = 1, alpha = NA),
                       draw_panel = function(data,panel_params,coord,
                                             method, # Regression method, see the lm.bal.internal function below
@@ -174,6 +175,46 @@ GeomLMBoot <- ggproto("GeomLMBoot",Geom,
                         )
 
                       })
+
+
+
+#' Do a balanced bootstrap on a linear model.
+#'
+#' This function calculates a linear regression of y versus x. The data
+#' are bootstrapped to generate confidence intervals around the slope and
+#' intercept. Optionally, the r2 value may also be calculated. By default,
+#' the geom prints the text of the results in the upper-left corner of the
+#' plot and also plots the fit line. The bootstrapped prediction interval
+#' around the fit may also be plotted.
+#'
+#' @param mapping Set of aesthetic mappings created by \code{\link[ggplot2]{aes}}
+#'   or \code{\link[ggplot2]{aes_}}.
+#' @param data The data to be displayed in this layer.
+#' @param stat The statistical transformation to use on the data for this layer,
+#'   as a string.
+#' @param method Regression model of the slope. Defaults to `ols` for Ordinary Least Squares, but may also be `rma` to perform a Reduced Major Axis (i.e., Standard Major Axis - not Ranged)
+#' @param location Location to print fit results. Defaults to `tl` (top-left), but may be `tr`, `bl`, or `br`.
+#' @param n Bootstrap N, defaults to 10000
+#' @param show.fit Should the regression fit line be shown? Boolean, defaults to TRUE.
+#' @param show.label Should the regression fit summary be shown? Boolean, defaults to TRUE.
+#' @param show.pred.band Should the prediction interval be calculated and shown? Boolean. This is computationally intensive because it is also bootstrapped.
+#' @param linesize The size of the fit line (in points).
+#' @param ci.width The width of the confidence interval to use (in percents).
+#' @param fill Color of the prediction interval.
+#' @param pred.alpha Alpha of the prediction interval.
+#' @param pred.steps Number of steps to calculate the prediction interval at. Increase for higher resolution at cost of computation time.
+#' @param m Should the slope coefficient be shown? Boolean, defaults to TRUE.
+#' @param m.95 Should the slope's confidence interval be shown? Boolean, defaults to TRUE.
+#' @param int Should the intercept be shown? Boolean, defaults to TRUE.
+#' @param int.95 Should the intercept's confidence interval be shown? Boolean, defaults to TRUE.
+#' @param r2 Should Pearson's r-squared be shown? Boolean, defaults to TRUE.
+#' @param r2.95 Should the r-squared confidence interval be shown? Boolean, defaults to FALSE. This can be misleading for poor fits because the calculated r value may be either negative or positive and is then squared. Use with caution.
+#' @param p Should the slope's p-value be printed? This only prints if the hypothetical 'p' is above or below the significance level chosen. I.e., does the slope's confidence interval overlap with zero?
+#' @param fontfamily Font family as a string to use for label plotting.
+#' @param fontsize Font size as an integer (in pointS). Used for lable plotting.
+#' @param coef.digits Number of digits to round to in the fit label.
+#' @param nudge_x Manual X-axis adjustment of the text. In plotting units (where plotting area ranges from 0 to 1).
+#' @param nudge_y Manual Y-axis adjustment of the text. In plotting units (where plotting area ranges from 0 to 1).
 #' @export
 geom_lmboot <- function(mapping = NULL,
                         data = NULL,
@@ -194,7 +235,7 @@ geom_lmboot <- function(mapping = NULL,
                         r2=T,
                         r2.95=F,
                         p=T,
-                        fontfamily="Times",
+                        fontfamily="serif",
                         ci.width=95,
                         show.pred.band=F,
                         fill="blue",
