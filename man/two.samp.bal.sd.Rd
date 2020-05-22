@@ -6,6 +6,13 @@
 \usage{
 two.samp.bal.sd(a, b, n = 10000)
 }
+\arguments{
+\item{a}{First dataset, a numerical vector.}
+
+\item{b}{Second dataset, a numerical vector. Length must be equal to a.}
+
+\item{n}{Number of bootstrap replicates to perform.}
+}
 \description{
 Perform a two-sample PAIRED balanced bootstrap using standard deviation as the sampling statistic
 }

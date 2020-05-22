@@ -6,6 +6,13 @@
 \usage{
 mean_ci_bal(x, n = 10000, ci = 95)
 }
+\arguments{
+\item{x}{Dataset, a numerical vector.}
+
+\item{n}{Number of bootstrap replicates to perform.}
+
+\item{ci}{Width of the confidence interval in percents. Defaults to 95.}
+}
 \description{
 Perform a one-sample balanced bootstrap using mean as the sampling statistic - output designed for stat_summary in ggplot
 }

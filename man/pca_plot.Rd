@@ -2,7 +2,7 @@
 % Please edit documentation in R/pca_functions.R
 \name{pca_plot}
 \alias{pca_plot}
-\title{'Clean' looking PCA plotting function.}
+\title{'Clean' looking PCA plotting function using ggplot2}
 \usage{
 pca_plot(
   data,
@@ -14,7 +14,7 @@ pca_plot(
   var_scaling = 5,
   text_size = 8,
   legend_position = "top",
-  font_family = "Times",
+  font_family = "serif",
   axis_alpha = 0.5,
   geom_type = "text",
   point_size = 4,
@@ -23,6 +23,39 @@ pca_plot(
   point_outline = F
 )
 }
+\arguments{
+\item{data}{Input dataset.}
+
+\item{cols}{Selection of columns from input dataset to perform the PCA on. These must all be}
+
+\item{color}{Optional. Select a column for color aesthetic mapping.}
+
+\item{shape}{Optional. Select a column for shape aesthetic mapping.}
+
+\item{label}{Optional. Select a column for sample label aesthetic mapping.}
+
+\item{scale}{Boolean. If TRUE, then correlation PCA. if FALSE, then covariance PCA.}
+
+\item{var_scaling}{Multiplier for raw variable loadings. Helps scale them to similar values as sample loadings most of the time.}
+
+\item{text_size}{Font size of all printed labels in points.}
+
+\item{legend_position}{Legend position. Accepts the same input as legend.position in ggplot's theme function}
+
+\item{font_family}{Font family to use for all labels.}
+
+\item{axis_alpha}{Alpha of the plotting x and y axes.}
+
+\item{geom_type}{Either "text" or "label" to use either geom_text or geom_label, respectively.}
+
+\item{point_size}{Point size in mm of plotted points.}
+
+\item{repel_variables}{Boolean. Should plotted variables be repelled?}
+
+\item{repel_samples}{Boolean. Should plotted samples be repelled?}
+
+\item{point_outline}{Boolean. Should sample points have a black border?}
+}
 \description{
-'Clean' looking PCA plotting function.
+'Clean' looking PCA plotting function using ggplot2
 }

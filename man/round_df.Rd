@@ -6,6 +6,11 @@
 \usage{
 round_df(df, digits)
 }
+\arguments{
+\item{df}{A data.frame}
+
+\item{digits}{Number of digits to round numerical entries to.}
+}
 \description{
 Round all numeric entries in a data frame
 }

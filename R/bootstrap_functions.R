@@ -1,4 +1,19 @@
-
+#' Do a balanced bootstrap on a linear model.
+#'
+#' This function calculates a linear regression of y versus x. The data
+#' are bootstrapped to generate confidence intervals around the slope and
+#' intercept. Optionally, the r2 value may also be calculated. The bootstrapped
+#' prediction interval around the fit may also be calculated.
+#'
+#' @param x x-axis values, a numeric vector
+#' @param y y-axis values, a numeric vector
+#' @param xsd (optional) Either a single value or a vector with length equal to x. Used to generate normal distributions around each x value with SD equal to xsd.
+#' @param ysd (optional) Either a single value or a vector with length equal to y. Used to generate normal distributions around each y value with SD equal to ysd.
+#' @param n Number of bootstrap replicates to perform.
+#' @param ci.width Width of the confidence interval to use for hypothesis testing, a single numeric value between 1 and 100
+#' @param method regression method. either 'ols" for Ordinary Least Squares or 'rma' for Reduced Major Axis.
+#' @param pred.band Compute the prediction interval? This is computationally intensive, especially for large datasets.
+#' @param pred.steps # of steps to calculate the prediction interval at. Increase for higher resolution at cost of computation time.
 #' @export
 lm.bal <- function(x,
                    y,
@@ -9,16 +24,6 @@ lm.bal <- function(x,
                    method=c("ols","rma"),
                    pred.band = T,
                    pred.steps = 25){
-
-  # x: x-axis values, a numeric vector
-  # y: y-axis values, a numeric vector
-  # xsd: (optional) Either a single value or a vector with length equal to x. Used to generate normal distributions around each x value with SD equal to xsd.
-  # ysd: (optional) Either a single value or a vector with length equal to y. Used to generate normal distributions around each y value with SD equal to ysd.
-  # n: Number of bootstrap replicates to perform.
-  # ci.width: Width of the confidence interval to use for hypothesis testing, a single numeric value between 1 and 100
-  # method: regression method. either 'ols" for Ordinary Least Squares or 'rma' for Reduced Major Axis.
-  # pred.band: Compute the prediction interval? This is computationally intensive, especially for large datasets.
-  # pred.steps: # of steps to calculate the 95% prediction interval at. Increase for higher resolution at cost of computation time.
 
   if(length(x) != length(y)){stop("x and y lengths not equal")}
   if(length(xsd) > 1 & length(xsd) != length(x)){stop("xsd must either be a single value or a vector of length equal to x")}
@@ -90,6 +95,10 @@ lm.bal <- function(x,
 
 
 #' Perform a one-sample balanced bootstrap using standard deviation as the sampling statistic
+
+#' @param a Input data, a numerical vector.
+#' @param n Number of bootstrap replicates to perform.
+
 #' @export
 one.samp.bal.sd <- function(a, n=10000){
   if(length(a)>1){
@@ -109,6 +118,10 @@ one.samp.bal.sd <- function(a, n=10000){
 
 
 #' Perform a one-sample balanced bootstrap using median as the sampling statistic
+#'
+#' @param a Input data, a numerical vector.
+#' @param n Number of bootstrap replicates to perform.
+#'
 #' @export
 one.samp.bal.median <- function(a, n=10000){
   if(length(a)>1){
@@ -128,6 +141,11 @@ one.samp.bal.median <- function(a, n=10000){
 
 
 #' Perform a two-sample PAIRED balanced bootstrap using standard deviation as the sampling statistic
+#'
+#' @param a First dataset, a numerical vector.
+#' @param b Second dataset, a numerical vector. Length must be equal to a.
+#' @param n Number of bootstrap replicates to perform.
+#'
 #' @export
 two.samp.bal.sd <- function(a,b,n=10000){
   data.frame(a,b) %>%
@@ -146,6 +164,12 @@ two.samp.bal.sd <- function(a,b,n=10000){
 
 
 #' Perform a one-sample balanced bootstrap using mean as the sampling statistic
+#'
+#' @param a Dataset, a numerical vector.
+#' @param n Number of bootstrap replicates to perform.
+#' @param incdata Boolean to indicate if the complete bootstrapped distribution should be included in the results.
+#'
+#'
 #' @export
 one.samp.bal <- function(a,n=10000,incdata=F){
   if(length(a)>1){
@@ -180,6 +204,14 @@ one.samp.bal <- function(a,n=10000,incdata=F){
 
 
 #' Perform a two-sample balanced bootstrap using mean as the sampling statistic, defaults to unpaired
+#'
+#'
+#' @param a First dataset, a numerical vector.
+#' @param b Second dataset, a numerical vector. If paired=TRUE, then length must be equal to a.
+#' @param n Number of bootstrap replicates to perform.
+#' @param paired Boolean to indicate if the data are paired.
+#' @param dist Boolean to indicate if the complete bootstrapped distribution should be included in the results.
+#'
 #' @export
 two.samp.bal <- function(a,b,n=10000,paired=F,dist=F){
   a <- na.omit(a)

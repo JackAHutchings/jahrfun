@@ -286,6 +286,11 @@ geom_lmboot <- function(mapping = NULL,
 
 
 #' Perform a one-sample balanced bootstrap using mean as the sampling statistic - output designed for stat_summary in ggplot
+#'
+#' @param x Dataset, a numerical vector.
+#' @param n Number of bootstrap replicates to perform.
+#' @param ci Width of the confidence interval in percents. Defaults to 95.
+#'
 #' @export
 mean_ci_bal <- function(x,n=10000,ci=95){
   mean_observed = mean(x)
@@ -301,6 +306,10 @@ mean_ci_bal <- function(x,n=10000,ci=95){
 
 
 #' Calculate the mean and confidence intervals of a distribution - output designed for stat_summary in ggplot
+#'
+#' @param x Dataset, a numerical vector.
+#' @param ci Width of the confidence interval in percents. Defaults to 95.
+#'
 #' @export
 mean_ci_dist <- function(x,ci=95){
   data.frame(y = mean(x),
@@ -308,17 +317,24 @@ mean_ci_dist <- function(x,ci=95){
              ymax = sort(x)[(100+ci)/2/100*length(x)])
 }
 
-
+#' A simple linear model geom.
+#'
+#' A simplified edit of geom_smooth that just draws a y~x OLS regression line.
 #' @export
 geom_lm <- function(...,formula=y~x,method=lm,se=F){ggplot2::geom_smooth(...,formula=formula,method=method,se=se)}
+
+#' Editted ggsave2 from cowplot function.
+#'
+#' Edit of ggplot save (actually the cowplot implementation ggsave2) that includes some sensible defaults, defaults units to mm,
+#' and uses ImageMagick to trim whitespace from an exported png.
 #' @export
 ggsave <- function(
     filename, plot = ggplot2::last_plot(), device = NULL,
     path = NULL, scale = 1, width = NA, height = NA,
     units = c("mm"), dpi = 600, limitsize = TRUE, border=50, ...){
 
-    if(is.na(width)){width = 2*height}
-    if(is.na(height)){height = 2*width}
+    if(is.na(width)){width = 1.25*height}
+    if(is.na(height)){height = 1.25*width}
 
     cowplot::ggsave2(filename=filename,
                      plot=plot,
@@ -331,5 +347,5 @@ ggsave <- function(
                      dpi=dpi,
                      limitsize=limitsize,
                      ...)
-    system(paste0("magick convert \"",filename,"\" -trim -bordercolor white -border ",border," \"",filename,"\""))
+    if(grepl(".png",filename)){system(paste0("magick convert \"",filename,"\" -trim -bordercolor white -border ",border," \"",filename,"\""))}
   }

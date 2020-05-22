@@ -7,5 +7,5 @@
 \method{cbind}{na}(..., deparse.level = 1)
 }
 \description{
-cbind with NAs... written by someone on stackoverflow.
+Same functionality as cbind, but with NAs. I honestly don't fully remember the functionality here.
 }

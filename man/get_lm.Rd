@@ -6,6 +6,11 @@
 \usage{
 get_lm(x, y)
 }
+\arguments{
+\item{x}{Independent variable.}
+
+\item{y}{Dependent variable.}
+}
 \description{
 Take two numerical vectors and output a dataframe containing the OLS slope and intercept
 }

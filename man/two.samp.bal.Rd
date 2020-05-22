@@ -6,6 +6,17 @@
 \usage{
 two.samp.bal(a, b, n = 10000, paired = F, dist = F)
 }
+\arguments{
+\item{a}{First dataset, a numerical vector.}
+
+\item{b}{Second dataset, a numerical vector. If paired=TRUE, then length must be equal to a.}
+
+\item{n}{Number of bootstrap replicates to perform.}
+
+\item{paired}{Boolean to indicate if the data are paired.}
+
+\item{dist}{Boolean to indicate if the complete bootstrapped distribution should be included in the results.}
+}
 \description{
 Perform a two-sample balanced bootstrap using mean as the sampling statistic, defaults to unpaired
 }

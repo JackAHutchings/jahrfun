@@ -1,6 +1,10 @@
 
 
 #' Round all numeric entries in a data frame
+#'
+#' @param df A data.frame
+#' @param digits Number of digits to round numerical entries to.
+#'
 #' @export
 round_df <- function(df, digits) {
   nums <- vapply(df, is.numeric, FUN.VALUE = logical(1))
@@ -9,6 +13,10 @@ round_df <- function(df, digits) {
 }
 
 #' Take two numerical vectors and output a dataframe containing the OLS slope and intercept
+#'
+#' @param x Independent variable.
+#' @param y Dependent variable.
+#'
 #' @export
 get_lm <- function(x,y) {
   data <- tibble(x,y)
@@ -21,6 +29,9 @@ get_lm <- function(x,y) {
 
 
 #' cbind with NAs... written by someone on stackoverflow.
+#'
+#' Same functionality as cbind, but with NAs. I honestly don't fully remember the functionality here.
+#'
 #' @export
 cbind.na <- function (..., deparse.level = 1)
 {
@@ -117,6 +128,10 @@ cbind.na <- function (..., deparse.level = 1)
   }
   r
 }
+
+#' rbind with NAs. Written by someone on stackoverflow.
+#'
+#' Same functionality as rbind, but with NAs. I honestly don't fully remember the functionality here.
 
 #' @export
 rbind.na <- function (..., deparse.level = 1)

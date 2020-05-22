@@ -6,6 +6,13 @@
 \usage{
 one.samp.bal(a, n = 10000, incdata = F)
 }
+\arguments{
+\item{a}{Dataset, a numerical vector.}
+
+\item{n}{Number of bootstrap replicates to perform.}
+
+\item{incdata}{Boolean to indicate if the complete bootstrapped distribution should be included in the results.}
+}
 \description{
 Perform a one-sample balanced bootstrap using mean as the sampling statistic
 }

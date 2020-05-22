@@ -6,6 +6,11 @@
 \usage{
 one.samp.bal.sd(a, n = 10000)
 }
+\arguments{
+\item{a}{Input data, a numerical vector.}
+
+\item{n}{Number of bootstrap replicates to perform.}
+}
 \description{
 Perform a one-sample balanced bootstrap using standard deviation as the sampling statistic
 }
