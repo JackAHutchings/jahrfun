@@ -88,6 +88,13 @@ jah_settings <- function(){
                   validate = T))
 }
 
+#' Define a Windows font, set scipen options, and define MRS's default ggplot theme.
+#'
+#' @export
+mrs_settings <- function(){
+  print("this is a test")
+}
+
 #' Change the default unit to mm
 #' @export
 unit <- function(...,units="mm"){grid::unit(units=units,...)}
