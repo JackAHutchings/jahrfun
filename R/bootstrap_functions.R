@@ -256,3 +256,145 @@ two.samp.bal <- function(a,b,n=10000,paired=F,dist=F){
     }
   }
 }
+
+
+#' Implementation of the balanced bootstrap for one or two samples
+#' 
+#' This function performs a balanced bootstrap on one or two samples If only one sample is provided, its bootstrapped distribution is compared against 
+#' a defined value (null) to test for significance. If two samples are provided, then the first sample's summary statistic is subtracted from the second
+#' sample's sampling statistic and the difference is compared against the defined value (null) to test for signifiance.
+#' 
+#' By default, this is a simple balanced bootstrap where the sample is replicates n times, shuffled, and then subset into groups equal to the original
+#' sample size. However, if errors (asd or bsd) for either group are provided, then each bootstrap replicate for a value with an associated error is sampled from a 
+#' normal distribution whose mean is the observed value and standard deviation is the user-submitted error. Thus, if errors are provided, this is more 
+#' of a balanced Monte Carlo and carries an additional assumption that the true distribution surrounding individual values is normal.
+#' 
+#' The 'balanced' notion used here is taken from "Efficient bootstrap simulation" by Davison et al. 1986 Biometrika, Volume 73, Issue 3, December 1986, Pages 555–566, 
+#' https://doi.org/10.1093/biomet/73.3.555
+#' 
+#' The 'difference' tested is b minus a, thus the directionality is such that positive differences indicate b > a and negative differences indicate b < a.
+#' 
+#' @section Output:
+#' This function returns a named list as the result:
+#' \itemize{
+#' \item tidy.data - Summary statistics of the bootstrapped distribution
+#' \item data - The complete bootstrap distribution(s) summarized at the replicate level using stat.function
+#' \item parameters - The input parameters of the function
+#' \item stat.function - The actual function used as the sampling statistic
+#' \item input - The input data
+#' }
+#'
+#' @param a First dataset, a numerical vector.
+#' @param b Second dataset, a numerical vector. If paired=TRUE, then length must be equal to a.
+#' @param asd (optional) First dataset's error as 1 standard deviation. If used, this must either be a single number (if error is uniform) or a vector with length equal to a.
+#' @param bsd (optional) Second dataset's error as 1 standard deviation. If used, this must either be a single number (if error is uniform) or a vector with length equal to a.
+#' @param n Number of bootstrap replicates to perform.
+#' @param ci.width Width of the confidence interval to use for hypothesis testing, a single numeric value between 1 and 100
+#' @param null Value representing the null hypothesis, default is 0.
+#' @param stat.function Sampling statistic to use. Can use any function that takes a single vector and reports a single numerical value as its result. Default is the mean.
+#' @param paired (optional) Boolean to indicate if the data are paired. Only relevant for two-sample situations.
+#'
+#' @export
+bal.boot <- function(a,
+                     b=NA,
+                     asd=NA,
+                     bsd=NA,
+                     n=10000,
+                     ci.width = 95,
+                     null=0,
+                     stat.function=mean,
+                     paired=F){
+  
+  if(!is.na(b) & paired & (length(a) != length(b))){stop("You indicated paired data but the length of a is not equal to b")}
+  if(length(asd) > 1 & length(asd) != length(a)){stop("asd must either be a single value or a vector of length equal to a")}
+  if(length(bsd) > 1 & length(bsd) != length(b)){stop("bsd must either be a single value or a vector of length equal to b")}
+  if(ci.width < 1 | ci.width > 100){stop("ci.width must be between 1 and 100")}
+  if(length(a) == 1){stop("a has a length of 1!")}
+  if(!is.numeric(a)){stop("a is non-numeric!")}
+  if(!is.na(asd) & !is.numeric(asd)){stop("asd is non-numeric!")}
+  if(!is.na(b) & !is.numeric(b)){stop("b is non-numeric!")}
+  if(!is.na(bsd) & !is.numeric(bsd)){stop("bsd is non-numeric!")}
+  
+  if(is.na(asd)){asd = 0}
+  if(is.na(bsd)){bsd = 0}
+  
+  ci.lower = (100-ci.width)/2/100
+  ci.upper = 1-ci.lower
+  
+  if(is.na(b)){
+    data <- data.frame(a = a, asd = asd) %>% 
+      rowwise() %>% 
+      mutate(rep = list(data.frame(dist = rnorm(n=n,mean=a,sd=asd), rep = 1:n))) %>% 
+      unnest(rep) %>% 
+      mutate(rep = sample(rep)) %>% 
+      group_by(rep) %>% 
+      summarize(dist = stat.function(a),.groups="keep")
+    
+    tidy.data <- data %>% 
+      ungroup() %>% 
+      summarize(mean  = mean(dist),
+                median = sort(dist)[0.5*n],
+                sd = sd(dist),
+                lower = sort(dist)[ci.lower*n],
+                upper = sort(dist)[ci.upper*n],
+                p.value = ifelse(sign(lower-null)==sign(upper-null),paste0("p < ",ci.lower*2),paste0("p > ",ci.lower*2)))
+  }
+  
+  if(!is.na(b) & paired){
+    data = data.frame(a=a,asd=asd,b=b,bsd=bsd) %>% 
+      rowwise() %>% 
+      mutate(rep = list(data.frame(a.dist = rnorm(n=n,mean=a,sd=asd),
+                                   b.dist = rnorm(n=n,mean=b,sd=bsd),
+                                   rep = 1:n))) %>% 
+      unnest(rep) %>% 
+      mutate(rep = sample(rep)) %>% 
+      group_by(rep) %>% 
+      summarize(a = stat.function(a.dist),
+                b = stat.function(b.dist),
+                .groups="keep") %>% 
+      mutate(diff = b - a)
+    
+    tidy.data <- data %>% 
+      ungroup() %>% 
+      summarize(mean = mean(diff),
+                median = sort(diff)[0.5*n],
+                sd = sd(diff),
+                lower = sort(diff)[ci.lower*n],
+                upper = sort(diff)[ci.upper*n],
+                p.value = ifelse(sign(lower-null)==sign(upper-null),paste0("p < ",ci.lower*2),paste0("p > ",ci.lower*2)))
+  }
+  
+  if(!anyNA(b) & !paired){
+    data = rbind(data.frame(group = "a",values = a,sd = asd),
+                 data.frame(group = "b",values = b,sd = bsd)) %>% 
+      rowwise() %>% 
+      mutate(rep = list(data.frame(dist = rnorm(n=n,mean=values,sd=sd),
+                                   rep = 1:n))) %>% 
+      unnest(rep) %>% 
+      group_by(group) %>% 
+      mutate(rep = sample(rep)) %>% 
+      group_by(group,rep) %>% 
+      summarize(dist = stat.function(dist),.groups="keep") %>% 
+      spread(group,dist) %>%
+      mutate(diff = b-a)
+    tidy.data <- data %>% 
+      ungroup() %>% 
+      summarize(mean = mean(diff),
+                median = sort(diff)[0.5*n],
+                sd = sd(diff),
+                lower = sort(diff)[ci.lower*n],
+                upper = sort(diff)[ci.upper*n],
+                p.value = ifelse(sign(lower-null)==sign(upper-null),paste0("p < ",ci.lower*2),paste0("p > ",ci.lower*2)))
+    
+  }
+  
+  if(anyNA(b)){input <- data.frame(group = "a",values = a,sd = asd)}
+  if(!anyNA(b)){input <- rbind(data.frame(index = 1:length(a),group = "a",values = a,sd = asd),
+                               data.frame(index = 1:length(b),group = "b",values = b,sd = bsd))}
+  
+  list("tidy" = tidy.data, #just the summary statistics
+       "data" = data, #the entire bootstrap results, including distributions
+       "parameters" = data.frame(ci.width,n,null,paired), #Input parameters
+       "stat.function" = stat.function, # Summary statistic function
+       "input" = input) #the a and b input data
+}

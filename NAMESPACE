@@ -3,6 +3,7 @@
 S3method(cbind,na)
 S3method(rbind,na)
 export(GeomLMBoot)
+export(bal.boot)
 export(geom_lm)
 export(geom_lmboot)
 export(get_lm)
