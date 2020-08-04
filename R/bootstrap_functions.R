@@ -59,7 +59,8 @@ lm.bal <- function(x,
     summarize(slope = suppressWarnings(ifelse(method[1]=="ols", cov(x,y)/var(x),NA)),
               slope = suppressWarnings(ifelse(method[1]=="rma", sign(cov(x,y))*sd(y)/sd(x),slope)),
               intercept = mean(y)-slope*mean(x),
-              r2 = cor(x,y)^2) %>%
+              r2 = suppressWarnings(cor(x,y)^2),
+              .groups="keep") %>%
     ungroup() %>%
     mutate(slope.observed = observed$slope,
            slope.lower = sort(slope)[lower*n],
