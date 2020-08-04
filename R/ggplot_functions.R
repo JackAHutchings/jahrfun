@@ -103,13 +103,13 @@ GeomLMBoot <- ggproto("GeomLMBoot",Geom,
                         # print(plot_data)
                         # print(data)
 
-                        segmentdata <- plot_data %>%
-                          mutate(index = 1:n()) %>%
-                          filter(index == min(index) | index == max(index))
-
+                        segmentdata <- plot_data %>% 
+                          arrange(x) %>% 
+                          filter(x == min(x) | x == max(x))
+                        
                         realdata <- data %>%
-                          mutate(index = 1:n()) %>%
-                          filter(index == min(index) | index == max(index))
+                          arrange(x) %>% 
+                          filter(x == min(x) | x == max(x))
 
                         scale_x_slope = (segmentdata$x[2] - segmentdata$x[1]) / (realdata$x[2] - realdata$x[1])
                         scale_x_intercept = mean(segmentdata$x) - scale_x_slope*mean(realdata$x)
@@ -348,4 +348,205 @@ ggsave <- function(
                      limitsize=limitsize,
                      ...)
     if(grepl(".png",filename)){system(paste0("magick convert \"",filename,"\" -trim -bordercolor white -border ",border," \"",filename,"\""))}
-  }
+}
+
+
+
+
+
+
+#' @export
+GeomLMFreq <- ggproto("GeomLMFreq",Geom,
+                      required_aes = c("x","y"),
+                      default_aes = aes(colour = "black", linetype = 1, alpha = NA),
+                      draw_panel = function(data,panel_params,coord,
+                                            location, # Plot region, accepts four text-based options: "tl","tr","bl","br" for top-left, top-right, bottom-left, bottom-right
+                                            n, # Bootstrap N, defaults to 10000
+                                            show.fit, # Should the regression fit be shown?
+                                            show.label, # Should the regression summary be shown?
+                                            linesize, # Size of fit line.
+                                            m, # Should the slope be printed?
+                                            m.err, # Should the slope standard error be printed?
+                                            int, # Should the intercept by printed?
+                                            int.err, # Should the intercept standard error be printed?
+                                            r2, # Should the r2 be printed?
+                                            p, # Should the p-value be printed?
+                                            fontfamily, # Font family as a string. Defaults to "Times" aka Times New Roman, but other OS-specific calls should work
+                                            fontsize, # Font size in points
+                                            coef.digits, # Number of digits for the coefficients
+                                            p.digits, # Number of digits for the p-value
+                                            nudge_x, # X-axis adjustment of the text
+                                            nudge_y # Y-axis adjustment of the text
+                      ){
+                        
+                        #Generate CI for slope and r2 using the balanced bootstrap approach
+                        
+                        plot_data <- coord$transform(data,panel_params)
+                        
+
+                        full_model <- summary(lm(y ~ x,data=data))
+                        
+                        if(m.err==T){
+                          eq.slope = paste("Slope = ",round(full_model$coefficients[2,1],coef.digits),
+                                           " \u00b1 ",round(full_model$coefficients[2,2], digits=coef.digits),sep="")}
+                        if(m.err==F){eq.slope = paste("Slope = ",round(full_model$coefficients[2,1], digits =coef.digits),sep="")}
+                        
+                        if(int.err==T){
+                          eq.int = paste("Intercept = ",round(full_model$coefficients[1,1],digits=coef.digits),
+                                         " \u00b1 ",round(full_model$coefficients[1,2], digits=coef.digits),sep="")}
+                        if(int.err==F){eq.int = paste("Intercept = ",round(full_model$coefficients[1,1], digits =coef.digits),sep="")}
+                        
+                        eq.r2 = paste("r\u00B2 = ",round(full_model$r.squared, digits =coef.digits),sep="")
+                        
+                        eq.p = paste("p = ",round(full_model$coefficients[2,4],digits=p.digits))
+                        
+                        eq = list(m = eq.slope,
+                                  int = eq.int,
+                                  r2 = eq.r2,
+                                  p = eq.p)
+                        
+                        if(m==F) {eq$m<-NA}
+                        if(int==F) {eq$int<-NA}
+                        if(r2==F) {eq$r2<-NA}
+                        if(p==F) {eq$p<-NA}
+                        
+                        eq = eq[!is.na(eq)]
+                        eq = paste(eq,collapse="\n")
+                        
+                        if(location=="tl"){xloc = 0.025 ; yloc = 0.975 ; vjust = 1}
+                        if(location=="tr"){xloc = 0.600 ; yloc = 0.975 ; vjust = 1}
+                        if(location=="bl"){xloc = 0.025 ; yloc = 0.025 ; vjust = 0}
+                        if(location=="br"){xloc = 0.600 ; yloc = 0.025 ; vjust = 0}
+                        
+                        if(show.label){
+                          label_grob <- textGrob(label = eq,
+                                                 x= xloc + nudge_x,
+                                                 y= yloc + nudge_x,
+                                                 default.units = "native",
+                                                 hjust = 0,
+                                                 vjust = vjust,
+                                                 gp = gpar(fontsize = fontsize * .pt,
+                                                           fontfamily = fontfamily))
+                        }else if(!show.label){label_grob <- NULL}
+
+                        segmentdata <- plot_data %>% 
+                          arrange(x) %>% 
+                          filter(x == min(x) | x == max(x))
+
+                        realdata <- data %>%
+                          arrange(x) %>% 
+                          filter(x == min(x) | x == max(x))
+
+                        scale_x_slope = (segmentdata$x[2] - segmentdata$x[1]) / (realdata$x[2] - realdata$x[1])
+                        scale_x_intercept = mean(segmentdata$x) - scale_x_slope*mean(realdata$x)
+                        scale_y_slope = (segmentdata$y[2] - segmentdata$y[1]) / (realdata$y[2] - realdata$y[1])
+                        scale_y_intercept = mean(segmentdata$y) - scale_y_slope*mean(realdata$y)
+                        
+                        if(show.fit){
+                          regressiondata <- realdata %>%
+                            mutate(y = x * full_model$coefficients[2,1] + full_model$coefficients[1,1]) %>% 
+                            mutate(x = x * scale_x_slope + scale_x_intercept,
+                                   y = y * scale_y_slope + scale_y_intercept)
+                          
+                          fit_grob <- segmentsGrob(
+                            x0=regressiondata$x[1],
+                            y0=regressiondata$y[1],
+                            x1=regressiondata$x[2],
+                            y1=regressiondata$y[2],
+                            default.units = "native",
+                            arrow=NULL,
+                            gp = gpar(
+                              col = alpha(plot_data$colour,plot_data$alpha),
+                              fill = alpha(plot_data$colour,plot_data$alpha),
+                              lwd = linesize * .pt,
+                              lty = plot_data$linetype[1],
+                              lineend = "butt",
+                              linejoin = "round",
+                              linemitre = 10)
+                          )
+                        } else if(!show.fit){fit_grob <- NULL}
+                        
+
+                        
+                        grobTree(
+                          label_grob,
+                          fit_grob
+                        )
+                        
+                      })
+
+
+
+#' Perform a linear regression using the lm command and output the results..
+#'
+#'
+#' @param mapping Set of aesthetic mappings created by \code{\link[ggplot2]{aes}}
+#'   or \code{\link[ggplot2]{aes_}}.
+#' @param data The data to be displayed in this layer.
+#' @param stat The statistical transformation to use on the data for this layer,
+#'   as a string.
+#' @param location Location to print fit results. Defaults to `tl` (top-left), but may be `tr`, `bl`, or `br`.
+#' @param show.fit Should the regression fit line be shown? Boolean, defaults to TRUE.
+#' @param show.label Should the regression fit summary be shown? Boolean, defaults to TRUE.
+#' @param linesize The size of the fit line (in points).
+#' @param m Should the slope coefficient be shown? Boolean, defaults to TRUE.
+#' @param m.err Should the slope's standard error be shown? Boolean, defaults to TRUE.
+#' @param int Should the intercept be shown? Boolean, defaults to TRUE.
+#' @param int.err Should the intercept's standard error be shown? Boolean, defaults to TRUE.
+#' @param r2 Should Pearson's r-squared be shown? Boolean, defaults to TRUE.
+#' @param p Should the slope's p-value be printed?
+#' @param fontfamily Font family as a string to use for label plotting.
+#' @param fontsize Font size as an integer (in pointS). Used for lable plotting.
+#' @param coef.digits Number of digits to round to in the fit label.
+#' @param nudge_x Manual X-axis adjustment of the text. In plotting units (where plotting area ranges from 0 to 1).
+#' @param nudge_y Manual Y-axis adjustment of the text. In plotting units (where plotting area ranges from 0 to 1).
+#' @section Aesthetics:
+#' The geom understands the following aesthetics (required are in bold):
+#' \itemize{
+#' \item \strong{x}
+#' \item \strong{y}
+#' }
+#' @export
+geom_lmfreq <- function(mapping = NULL,
+                        data = NULL,
+                        stat = "identity",
+                        show.legend = NA,
+                        position = "identity",
+                        ...,
+                        show.fit=T,
+                        show.label=T,
+                        linesize=1,
+                        location = "tl",
+                        m=T,
+                        m.err=T,
+                        int=T,
+                        int.err=T,
+                        r2=T,
+                        p=T,
+                        fontfamily="serif",
+                        fontsize=6,
+                        coef.digits=2,
+                        nudge_x = 0,
+                        nudge_y = 0,
+                        inherit.aes = T
+) {
+  layer(geom = GeomLMFreq, stat = stat, data = data, mapping = mapping,
+        position = position, show.legend = show.legend, inherit.aes = inherit.aes,
+        params = list(location = location,
+                      show.fit=show.fit,
+                      show.label = show.label,
+                      linesize=linesize,
+                      m=m,
+                      m.err=m.err,
+                      int=int,
+                      int.err=int.err,
+                      r2=r2,
+                      p=p,
+                      fontfamily=fontfamily,
+                      fontsize=fontsize*5/14,
+                      coef.digits=coef.digits,
+                      nudge_x=nudge_x,
+                      nudge_y=nudge_y,
+                      ...)
+  )
+}
