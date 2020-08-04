@@ -374,7 +374,7 @@ GeomLMFreq <- ggproto("GeomLMFreq",Geom,
                                             fontfamily, # Font family as a string. Defaults to "Times" aka Times New Roman, but other OS-specific calls should work
                                             fontsize, # Font size in points
                                             coef.digits, # Number of digits for the coefficients
-                                            p.digits, # Number of digits for the p-value
+                                            significance.level, # Significance level for the slope
                                             nudge_x, # X-axis adjustment of the text
                                             nudge_y # Y-axis adjustment of the text
                       ){
@@ -398,7 +398,8 @@ GeomLMFreq <- ggproto("GeomLMFreq",Geom,
                         
                         eq.r2 = paste("r\u00B2 = ",round(full_model$r.squared, digits =coef.digits),sep="")
                         
-                        eq.p = paste("p = ",round(full_model$coefficients[2,4],digits=p.digits))
+                        
+                        eq.p = paste("p ",ifelse(full_model$coefficients[2,4]<significance.level,paste("<",significance.level),paste(">",significance.level)))
                         
                         eq = list(m = eq.slope,
                                   int = eq.int,
@@ -494,11 +495,11 @@ GeomLMFreq <- ggproto("GeomLMFreq",Geom,
 #' @param int Should the intercept be shown? Boolean, defaults to TRUE.
 #' @param int.err Should the intercept's standard error be shown? Boolean, defaults to TRUE.
 #' @param r2 Should Pearson's r-squared be shown? Boolean, defaults to TRUE.
-#' @param p Should the slope's p-value be printed?
+#' @param p Should the slope's significance be shown?
+#' @param signifiance.level Significance level to use for hypothesis testing. Default is 0.05
 #' @param fontfamily Font family as a string to use for label plotting.
 #' @param fontsize Font size as an integer (in pointS). Used for lable plotting.
 #' @param coef.digits Number of digits to round to in the fit label.
-#' @param p.digits Number of digits for the p-value.
 #' @param nudge_x Manual X-axis adjustment of the text. In plotting units (where plotting area ranges from 0 to 1).
 #' @param nudge_y Manual Y-axis adjustment of the text. In plotting units (where plotting area ranges from 0 to 1).
 #' @section Aesthetics:
@@ -524,7 +525,7 @@ geom_lmfreq <- function(mapping = NULL,
                         int.err=T,
                         r2=T,
                         p=T,
-                        p.digits=3,
+                        signifiance.level=0.05,
                         fontfamily="serif",
                         fontsize=6,
                         coef.digits=2,
@@ -544,7 +545,7 @@ geom_lmfreq <- function(mapping = NULL,
                       int.err=int.err,
                       r2=r2,
                       p=p,
-                      p.digits=p.digits,
+                      signifiance.level=signifiance.level,
                       fontfamily=fontfamily,
                       fontsize=fontsize*5/14,
                       coef.digits=coef.digits,
