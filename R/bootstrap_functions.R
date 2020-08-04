@@ -29,6 +29,8 @@ lm.bal <- function(x,
   if(length(xsd) > 1 & length(xsd) != length(x)){stop("xsd must either be a single value or a vector of length equal to x")}
   if(length(ysd) > 1 & length(ysd) != length(y)){stop("ysd must either be a single value or a vector of length equal to y")}
   if(ci.width < 1 | ci.width > 100){stop("ci.width must be between 1 and 100")}
+  if(length(x) < 7){warning("Data points with N < 7 results in all permutations being calculated. Interpet confidence intervals with caution.")}
+  if(length(x) > 6 & length(x) < 9 & n == 10000){warning("Data points with N < 9 results in less than 10,000 possible permutations. Consider reducing bootstrap N to 1,000 and interpret confidence intervals with caution.")}
 
   lower = (100-ci.width)/2/100
   upper = 1-lower
@@ -37,6 +39,12 @@ lm.bal <- function(x,
                      y = y,
                      xsd = xsd,
                      ysd = ysd)
+  
+  observed = input %>% 
+    summarize(slope = ifelse(method[1]=="ols", cov(x,y)/var(x),NA),
+              slope = ifelse(method[1]=="rma", sign(cov(x,y))*sd(y)/sd(x),slope),
+              intercept = mean(y)-slope*mean(x),
+              r2 = cor(x,y)^2)
 
   data = input %>%
     mutate(sample_index = 1:n(),
@@ -48,23 +56,23 @@ lm.bal <- function(x,
     ungroup() %>%
     mutate(rep = sample(rep)) %>%
     group_by(rep) %>%
-    summarize(slope = ifelse(method[1]=="ols", cov(x,y)/var(x),NA),
-              slope = ifelse(method[1]=="rma", sign(cov(x,y))*sd(y)/sd(x),slope),
+    summarize(slope = suppressWarnings(ifelse(method[1]=="ols", cov(x,y)/var(x),NA)),
+              slope = suppressWarnings(ifelse(method[1]=="rma", sign(cov(x,y))*sd(y)/sd(x),slope)),
               intercept = mean(y)-slope*mean(x),
               r2 = cor(x,y)^2) %>%
     ungroup() %>%
-    mutate(slope.observed = mean(slope),
+    mutate(slope.observed = observed$slope,
            slope.lower = sort(slope)[lower*n],
            slope.upper = sort(slope)[upper*n],
            slope.sig = ifelse(sign(slope.lower) == sign(slope.upper),paste0("< ",lower*2),paste0("> ",lower*2)),
-           intercept.observed = mean(intercept),
+           intercept.observed = observed$intercept,
            intercept.lower = sort(intercept)[lower*n],
            intercept.upper = sort(intercept)[upper*n],
            intercept.sig = ifelse(sign(intercept.lower) == sign(intercept.upper),paste0("< ",lower*2),paste0("> ",lower*2)),
-           r2.observed = mean(r2),
+           r2.observed = observed$r2,
            r2.lower = sort(r2)[lower*n],
            r2.upper = sort(r2)[upper*n])
-
+  
   if(pred.band){
     conf.band = data %>%
       mutate(x = list(seq(min(x),max(x),((max(x)-min(x))/pred.steps)))) %>%
