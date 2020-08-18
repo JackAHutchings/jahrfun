@@ -422,7 +422,7 @@ GeomLMFreq <- ggproto("GeomLMFreq",Geom,
                         if(show.label){
                           label_grob <- textGrob(label = eq,
                                                  x= xloc + nudge_x,
-                                                 y= yloc + nudge_x,
+                                                 y= yloc + nudge_y,
                                                  default.units = "native",
                                                  hjust = 0,
                                                  vjust = vjust,
