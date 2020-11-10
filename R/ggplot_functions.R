@@ -48,6 +48,8 @@ GeomLMBoot <- ggproto("GeomLMBoot",Geom,
 
                         model <- full_model$tidy
                         regression <- full_model$conf.band
+                        
+                        # print(regression)
 
 
                         if(m.95==T){
@@ -103,18 +105,39 @@ GeomLMBoot <- ggproto("GeomLMBoot",Geom,
                         # print(plot_data)
                         # print(data)
 
-                        segmentdata <- plot_data %>% 
+                        segmentdata_x <- plot_data %>% 
+                          select(x) %>% 
                           arrange(x) %>% 
-                          filter(x == min(x) | x == max(x))
+                          filter(x == min(x) | x == max(x)) %>% 
+                          distinct()
                         
-                        realdata <- data %>%
-                          arrange(x) %>% 
-                          filter(x == min(x) | x == max(x))
+                        
+                        segmentdata_y <- plot_data %>% 
+                          select(y) %>% 
+                          arrange(y) %>% 
+                          filter(y == min(y) | y == max(y)) %>% 
+                          distinct()
 
-                        scale_x_slope = (segmentdata$x[2] - segmentdata$x[1]) / (realdata$x[2] - realdata$x[1])
-                        scale_x_intercept = mean(segmentdata$x) - scale_x_slope*mean(realdata$x)
-                        scale_y_slope = (segmentdata$y[2] - segmentdata$y[1]) / (realdata$y[2] - realdata$y[1])
-                        scale_y_intercept = mean(segmentdata$y) - scale_y_slope*mean(realdata$y)
+                        
+                        realdata_x <- data %>%
+                          select(x) %>% 
+                          arrange(x) %>% 
+                          filter(x == min(x) | x == max(x)) %>% 
+                          distinct()
+                        
+                        realdata_y <- data %>%
+                          select(y) %>% 
+                          arrange(y) %>% 
+                          filter(y == min(y) | y == max(y)) %>% 
+                          distinct()
+                        
+                        scale_x_slope = (segmentdata_x$x[2] - segmentdata_x$x[1]) / (realdata_x$x[2] - realdata_x$x[1])
+                        scale_x_intercept = mean(segmentdata_x$x) - scale_x_slope*mean(realdata_x$x)
+                        scale_y_slope = (segmentdata_y$y[2] - segmentdata_y$y[1]) / (realdata_y$y[2] - realdata_y$y[1])
+                        scale_y_intercept = mean(segmentdata_y$y) - scale_y_slope*mean(realdata_y$y)
+                        
+                        # print(scale_x_slope)
+                        # print(scale_x_intercept)
 
                         if(show.fit){
                           regressiondata <- regression %>%
@@ -123,6 +146,8 @@ GeomLMBoot <- ggproto("GeomLMBoot",Geom,
                             rename(y = prediction.observed) %>%
                             mutate(x = x * scale_x_slope + scale_x_intercept,
                                    y = y * scale_y_slope + scale_y_intercept)
+                          
+                          # print(regressiondata)
 
                           fit_grob <- segmentsGrob(
                             x0=regressiondata$x[1],
@@ -430,21 +455,40 @@ GeomLMFreq <- ggproto("GeomLMFreq",Geom,
                                                            fontfamily = fontfamily))
                         }else if(!show.label){label_grob <- NULL}
 
-                        segmentdata <- plot_data %>% 
+                        segmentdata_x <- plot_data %>% 
+                          select(x) %>% 
                           arrange(x) %>% 
-                          filter(x == min(x) | x == max(x))
-
-                        realdata <- data %>%
+                          filter(x == min(x) | x == max(x)) %>% 
+                          distinct()
+                        
+                        
+                        segmentdata_y <- plot_data %>% 
+                          select(y) %>% 
+                          arrange(y) %>% 
+                          filter(y == min(y) | y == max(y)) %>% 
+                          distinct()
+                        
+                        
+                        realdata_x <- data %>%
+                          select(x) %>% 
                           arrange(x) %>% 
-                          filter(x == min(x) | x == max(x))
-
-                        scale_x_slope = (segmentdata$x[2] - segmentdata$x[1]) / (realdata$x[2] - realdata$x[1])
-                        scale_x_intercept = mean(segmentdata$x) - scale_x_slope*mean(realdata$x)
-                        scale_y_slope = (segmentdata$y[2] - segmentdata$y[1]) / (realdata$y[2] - realdata$y[1])
-                        scale_y_intercept = mean(segmentdata$y) - scale_y_slope*mean(realdata$y)
+                          filter(x == min(x) | x == max(x)) %>% 
+                          distinct()
+                        
+                        realdata_y <- data %>%
+                          select(y) %>% 
+                          arrange(y) %>% 
+                          filter(y == min(y) | y == max(y)) %>% 
+                          distinct()
+                        
+                        scale_x_slope = (segmentdata_x$x[2] - segmentdata_x$x[1]) / (realdata_x$x[2] - realdata_x$x[1])
+                        scale_x_intercept = mean(segmentdata_x$x) - scale_x_slope*mean(realdata_x$x)
+                        scale_y_slope = (segmentdata_y$y[2] - segmentdata_y$y[1]) / (realdata_y$y[2] - realdata_y$y[1])
+                        scale_y_intercept = mean(segmentdata_y$y) - scale_y_slope*mean(realdata_y$y)
+                        
                         
                         if(show.fit){
-                          regressiondata <- realdata %>%
+                          regressiondata <- realdata_x %>%
                             mutate(y = x * full_model$coefficients[2,1] + full_model$coefficients[1,1]) %>% 
                             mutate(x = x * scale_x_slope + scale_x_intercept,
                                    y = y * scale_y_slope + scale_y_intercept)
