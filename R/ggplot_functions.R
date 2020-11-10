@@ -111,7 +111,6 @@ GeomLMBoot <- ggproto("GeomLMBoot",Geom,
                           filter(x == min(x) | x == max(x)) %>% 
                           distinct()
                         
-                        
                         segmentdata_y <- plot_data %>% 
                           select(y) %>% 
                           arrange(y) %>% 
