@@ -43,7 +43,7 @@ lm.bal <- function(x,
   
   observed = input %>% 
     summarize(slope = ifelse(method[1]=="ols", cov(x,y)/var(x),NA),
-              slope = ifelse(method[1]=="ma", 0.5*(var(Y)/cov(X,Y)-var(X)/cov(X,Y)+sign(cov(X,Y))*(4+(var(Y)/cov(X,Y)-var(X)/cov(X,Y))^2)^0.5),slope),
+              slope = ifelse(method[1]=="ma", 0.5*(var(y)/cov(x,y)-var(x)/cov(x,y)+sign(cov(x,y))*(4+(var(y)/cov(x,y)-var(x)/cov(x,y))^2)^0.5),slope),
               slope = ifelse(method[1]=="rma", sign(cov(x,y))*sd(y)/sd(x),slope),
               intercept = mean(y)-slope*mean(x),
               r2 = cor(x,y)^2)
@@ -59,7 +59,7 @@ lm.bal <- function(x,
     mutate(rep = sample(rep)) %>%
     group_by(rep) %>%
     summarize(slope = suppressWarnings(ifelse(method[1]=="ols", cov(x,y)/var(x),NA)),
-              slope = suppressWarnings(ifelse(method[1]=="ma", 0.5*(var(Y)/cov(X,Y)-var(X)/cov(X,Y)+sign(cov(X,Y))*(4+(var(Y)/cov(X,Y)-var(X)/cov(X,Y))^2)^0.5),slope)),
+              slope = suppressWarnings(ifelse(method[1]=="ma", 0.5*(var(y)/cov(x,y)-var(x)/cov(x,y)+sign(cov(x,y))*(4+(var(y)/cov(x,y)-var(x)/cov(x,y))^2)^0.5),slope)),
               slope = suppressWarnings(ifelse(method[1]=="rma", sign(cov(x,y))*sd(y)/sd(x),slope)),
               intercept = mean(y)-slope*mean(x),
               r2 = suppressWarnings(cor(x,y)^2),
