@@ -116,7 +116,7 @@ one.samp.bal.sd <- function(a, n=10000){
   if(length(a)>1){
     data.frame(a) %>%
       mutate(rep = list(1:(n))) %>%
-      unnest() %>%
+      unnest(rep) %>%
       mutate(rep_shuffled = sample(rep)) %>%
       group_by(rep_shuffled) %>%
       summarize(sd = sd(a)) %>%
