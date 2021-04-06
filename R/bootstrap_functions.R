@@ -11,7 +11,7 @@
 #' @param ysd (optional) Either a single value or a vector with length equal to y. Used to generate normal distributions around each y value with SD equal to ysd.
 #' @param n Number of bootstrap replicates to perform.
 #' @param ci.width Width of the confidence interval to use for hypothesis testing, a single numeric value between 1 and 100
-#' @param method regression method. either 'ols" for Ordinary Least Squares or 'rma' for Reduced Major Axis.
+#' @param method Regression method. Either 'ols" for Ordinary Least Squares, 'ma' for Major Axis, or 'rma' for Reduced Major Axis.
 #' @param pred.band Compute the prediction interval? This is computationally intensive, especially for large datasets.
 #' @param pred.steps # of steps to calculate the prediction interval at. Increase for higher resolution at cost of computation time.
 #' @export
@@ -21,7 +21,7 @@ lm.bal <- function(x,
                    ysd=0,
                    n=10000,
                    ci.width=95,
-                   method=c("ols","rma"),
+                   method=c("ols","ma","rma"),
                    pred.band = T,
                    pred.steps = 25){
 
@@ -31,6 +31,7 @@ lm.bal <- function(x,
   if(ci.width < 1 | ci.width > 100){stop("ci.width must be between 1 and 100")}
   if(length(x) < 7){warning("Data points with N < 7 results in all permutations being calculated. Interpet confidence intervals with caution.")}
   if(length(x) > 6 & length(x) < 9 & n == 10000){warning("Data points with N < 9 results in less than 10,000 possible permutations. Consider reducing bootstrap N to 1,000 and interpret confidence intervals with caution.")}
+  if(!(method %in% c("ols","ma","rma"))){stop("Specified method must be either 'ols', 'ma', or 'rma'. You have specified something else.")}
 
   lower = (100-ci.width)/2/100
   upper = 1-lower
@@ -42,6 +43,7 @@ lm.bal <- function(x,
   
   observed = input %>% 
     summarize(slope = ifelse(method[1]=="ols", cov(x,y)/var(x),NA),
+              slope = ifelse(method[1]=="ma", 0.5*(var(Y)/cov(X,Y)-var(X)/cov(X,Y)+sign(cov(X,Y))*(4+(var(Y)/cov(X,Y)-var(X)/cov(X,Y))^2)^0.5),slope),
               slope = ifelse(method[1]=="rma", sign(cov(x,y))*sd(y)/sd(x),slope),
               intercept = mean(y)-slope*mean(x),
               r2 = cor(x,y)^2)
@@ -57,6 +59,7 @@ lm.bal <- function(x,
     mutate(rep = sample(rep)) %>%
     group_by(rep) %>%
     summarize(slope = suppressWarnings(ifelse(method[1]=="ols", cov(x,y)/var(x),NA)),
+              slope = suppressWarnings(ifelse(method[1]=="ma", 0.5*(var(Y)/cov(X,Y)-var(X)/cov(X,Y)+sign(cov(X,Y))*(4+(var(Y)/cov(X,Y)-var(X)/cov(X,Y))^2)^0.5),slope)),
               slope = suppressWarnings(ifelse(method[1]=="rma", sign(cov(x,y))*sd(y)/sd(x),slope)),
               intercept = mean(y)-slope*mean(x),
               r2 = suppressWarnings(cor(x,y)^2),
