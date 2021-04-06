@@ -11,7 +11,7 @@ lm.bal(
   ysd = 0,
   n = 10000,
   ci.width = 95,
-  method = c("ols", "rma"),
+  method = c("ols", "ma", "rma"),
   pred.band = T,
   pred.steps = 25
 )
@@ -29,7 +29,7 @@ lm.bal(
 
 \item{ci.width}{Width of the confidence interval to use for hypothesis testing, a single numeric value between 1 and 100}
 
-\item{method}{regression method. either 'ols" for Ordinary Least Squares or 'rma' for Reduced Major Axis.}
+\item{method}{Regression method. Either 'ols" for Ordinary Least Squares, 'ma' for Major Axis, or 'rma' for Reduced Major Axis.}
 
 \item{pred.band}{Compute the prediction interval? This is computationally intensive, especially for large datasets.}
 

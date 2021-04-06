@@ -2,12 +2,11 @@
 #'
 #' @export
 jah_settings <- function(){
-  windowsFonts(Times=windowsFont(family="Times New Roman"))
   options(scipen=999)
 
 
   base_font_size = 8 # Default Font size in points.
-  base_font_family = "Times" # Default font family.
+  base_font_family = "serif" # Default font family.
 
   theme_set(theme(line = element_line(color="black",size=0.25,linetype=1,lineend="butt",arrow=F,inherit.blank=T),
                   rect = element_rect(fill=NA,color="black",size=0.25,linetype=1,inherit.blank=T),
