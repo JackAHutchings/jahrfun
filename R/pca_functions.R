@@ -37,11 +37,11 @@ pca_data <- function(data,cols,samples="rowname",scale=T,var_scaling=5){
     mutate(loading = value * sdev * var_scaling) %>%
     select(rowname,pc,loading) %>%
     spread(pc,loading)
-  samples <- pca$x[,1:2]
+  sample_scores <- pca$x[,1:2]
 
   #sample grouping
   sample_groups = plot_data[,match(samples,names(plot_data))]
-  sample_pc1_pc2 = cbind.data.frame(sample_groups,samples)
+  sample_pc1_pc2 = cbind.data.frame(sample_groups,sample_scores)
 
   output <- list(pervar=pervar,vars=vars,samples=sample_pc1_pc2)
   output
