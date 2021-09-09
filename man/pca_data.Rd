@@ -9,7 +9,7 @@ pca_data(data, cols, samples = "rowname", scale = T, var_scaling = 5)
 \arguments{
 \item{data}{Input dataset.}
 
-\item{cols}{Selection of columns from input dataset to perform the PCA on. These must all be
+\item{cols}{Selection of columns from input dataset to perform the PCA on. All data within these columns be
 numerical. Any rows with missing values will be dropped. Accepts the following input types:
 \itemize{
 \item A numerical vector specifying the columns to use (i.e., c(2,3,8) uses columns 2, 3 and 8).
@@ -22,6 +22,14 @@ numerical. Any rows with missing values will be dropped. Accepts the following i
 \item{scale}{Boolean. If TRUE, then correlation PCA. if FALSE, then covariance PCA.}
 
 \item{var_scaling}{Multiplier for raw variable loadings. Helps scale them to similar values as sample loadings most of the time.}
+}
+\value{
+This returns a named list of data frames:
+\itemize{
+\item \strong{pervar} contains the percent variance explained by each principal component.
+\item \strong{vars} contains the variable loadings on each principal component. These may have been scaled by var_scaling for easier plotting.
+\item \strong{samples} contains the sample loadings on each principal component.
+}
 }
 \description{
 Extract PCA data and grouping for further analysis or publication-quality plots.
