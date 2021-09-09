@@ -1,7 +1,7 @@
 #' Extract PCA data and grouping for further analysis or publication-quality plots.
 #'
 #' @param data Input dataset.
-#' @param cols Selection of columns from input dataset to perform the PCA on. All data within these columns be
+#' @param vars Selection of columns from input dataset to perform the PCA on. All data within these columns be
 #' numerical. Any rows with missing values will be dropped. Accepts the following input types:
 #' \itemize{
 #' \item A numerical vector specifying the columns to use (i.e., c(2,3,8) uses columns 2, 3 and 8).
@@ -10,7 +10,7 @@
 #' }
 #' @param samples Optional column to provide unique sample identifier. Otherwise, rownames are used.
 #' @param scale Boolean. If TRUE, then correlation PCA. if FALSE, then covariance PCA.
-#' @param var_scaling Multiplier for raw variable loadings. Helps scale them to similar values as sample loadings most of the time.
+#' @param var_scaling Multiplier for raw variable loadings. Helps scale them to similar values as sample loadings most of the time. Set to FALSE for raw output.
 #' 
 #' @return This returns a named list of data frames:
 #' \itemize{
@@ -20,15 +20,15 @@
 #' }
 #'
 #' @export
-pca_data <- function(data,cols,samples="rowname",scale=T,var_scaling=5){
+pca_data <- function(data,vars,samples="rowname",scale=T,var_scaling=5){
 
-  if (is.numeric(cols)) {index = cols  }
-  if (is.character(cols) & length(cols) == 2) {index = match(cols[1], names(data)):match(cols[2], names(data))}
-  if (is.character(cols) & length(cols) > 2) {index = match(cols, names(data))}
+  if (is.numeric(vars)) {index = vars  }
+  if (is.character(vars) & length(vars) == 2) {index = match(vars[1], names(data)):match(vars[2], names(data))}
+  if (is.character(vars) & length(vars) > 2) {index = match(vars, names(data))}
   if (samples == "rowname") {data <- data %>% mutate(rowname = rownames(.))}
   
   aes_index <- match(samples, names(data))
-  plot_data <- na.omit(data[, c(index)])
+  plot_data <- na.omit(data[, c(aes_index,index)])
   pca <- prcomp(plot_data[, (length(aes_index) + 1):length(plot_data)], 
                 scale. = scale)
   pervar <- data.frame(percent_variance_explained = round(pca$sdev^2/sum(pca$sdev^2) * 100, 2)) %>% 
@@ -38,7 +38,7 @@ pca_data <- function(data,cols,samples="rowname",scale=T,var_scaling=5){
     gather(pc,loading,-rowname) %>% 
     full_join(data.frame(sdev = pca$sdev) %>% mutate(pc = paste0("PC",row.names(.))),by="pc") %>% 
     rowwise() %>% 
-    mutate(loading = loading*sdev*var_scaling) %>% 
+    mutate(loading = ifelse(var_scaling == F,loading,loading*sdev*var_scaling)) %>% 
     select(-sdev) %>% 
     spread(pc, loading) %>% 
     rename(variable = rowname)
