@@ -15,35 +15,29 @@
 #' @export
 pca_data <- function(data,cols,samples="rowname",scale=T,var_scaling=5){
 
-
-  #Select data to be used in PCA
-  if(is.numeric(cols)){index = cols}
-  if(is.character(cols) & length(cols)==2){index = match(cols[1],names(data)) : match(cols[2],names(data))}
-  if(is.character(cols) & length(cols)>2){index = match(cols,names(data))}
-
-  if(samples == "rowname"){data <- data %>% mutate(rowname = rownames(.))}
-
-  aes_index <- match(samples,names(data))
-  plot_data <- na.omit(data[,c(aes_index,index)])
-  #Generate PCA with some creative subsetting of plot_data
-  pca <- prcomp(plot_data[,(length(aes_index)+1):length(plot_data)],scale.=scale)
-  #Percent variance explained by PCs
-  pervar <- round(pca$sdev^2 / sum(pca$sdev^2) * 100,2)
-  #Plot values and limits
-  vars <- as.data.frame(pca$rotation[,1:2]) %>%
-    rownames_to_column() %>%
-    gather(pc,value,PC1,PC2) %>%
-    full_join(data.frame(pc = c("PC1","PC2"),sdev = pca$sdev[1:2]) %>% mutate(pc = as.character(pc)),by="pc") %>%
-    mutate(loading = value * sdev * var_scaling) %>%
-    select(rowname,pc,loading) %>%
-    spread(pc,loading)
-  samples <- pca$x[,1:2]
-
-  #sample grouping
-  sample_groups = plot_data[,match(samples,names(plot_data))]
-  sample_pc1_pc2 = cbind.data.frame(sample_groups,samples)
-
-  output <- list(pervar=pervar,vars=vars,samples=sample_pc1_pc2)
+  if (is.numeric(cols)) {index = cols  }
+  if (is.character(cols) & length(cols) == 2) {index = match(cols[1], names(data)):match(cols[2], names(data))}
+  if (is.character(cols) & length(cols) > 2) {index = match(cols, names(data))}
+  if (samples == "rowname") {data <- data %>% mutate(rowname = rownames(.))}
+  
+  aes_index <- match(samples, names(data))
+  plot_data <- na.omit(data[, c(index)])
+  pca <- prcomp(plot_data[, (length(aes_index) + 1):length(plot_data)], 
+                scale. = scale)
+  pervar <- data.frame(percent_variance_explained = round(pca$sdev^2/sum(pca$sdev^2) * 100, 2)) %>% 
+    mutate(PC = paste0("PC",row.names(.))) %>% 
+    select(PC,percent_variance_explained)
+  vars <- as.data.frame(pca$rotation) %>% rownames_to_column() %>% 
+    gather(pc,loading,-rowname) %>% 
+    full_join(data.frame(sdev = pca$sdev) %>% mutate(pc = paste0("PC",row.names(.))),by="pc") %>% 
+    rowwise() %>% 
+    mutate(loading = loading*sdev*var_scaling) %>% 
+    select(-sdev) %>% 
+    spread(pc, loading) %>% 
+    rename(variable = rowname)
+  sample_ids = plot_data[, match(samples, names(plot_data))]
+  sample_data = cbind.data.frame(sample_ids, pca$x)
+  output <- list(pervar = pervar, vars = vars, samples = sample_pc1_pc2)
   output
 }
 
