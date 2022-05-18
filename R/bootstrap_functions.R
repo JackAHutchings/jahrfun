@@ -31,7 +31,7 @@ lm.bal <- function(x,
   if(ci.width < 1 | ci.width > 100){stop("ci.width must be between 1 and 100")}
   if(length(x) < 7){warning("Data points with N < 7 results in all permutations being calculated. Interpet confidence intervals with caution.")}
   if(length(x) > 6 & length(x) < 9 & n == 10000){warning("Data points with N < 9 results in less than 10,000 possible permutations. Consider reducing bootstrap N to 1,000 and interpret confidence intervals with caution.")}
-  if(!(method %in% c("ols","ma","rma"))){stop("Specified method must be either 'ols', 'ma', or 'rma'. You have specified something else.")}
+  if(!(method[1] %in% c("ols","ma","rma"))){stop("Specified method must be either 'ols', 'ma', or 'rma'. You have specified something else.")}
 
   lower = (100-ci.width)/2/100
   upper = 1-lower
