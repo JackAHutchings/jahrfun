@@ -215,61 +215,6 @@ one.samp.bal <- function(a,n=10000,incdata=F){
 }
 
 
-#' Perform a two-sample balanced bootstrap using mean as the sampling statistic, defaults to unpaired
-#'
-#'
-#' @param a First dataset, a numerical vector.
-#' @param b Second dataset, a numerical vector. If paired=TRUE, then length must be equal to a.
-#' @param n Number of bootstrap replicates to perform.
-#' @param paired Boolean to indicate if the data are paired.
-#' @param dist Boolean to indicate if the complete bootstrapped distribution should be included in the results.
-#'
-#' @export
-two.samp.bal <- function(a,b,n=10000,paired=F,dist=F){
-  a <- na.omit(a)
-  b <- na.omit(b)
-  diff.observed <- mean(b) - mean(a)
-  if (paired==F) {
-    shuffled <- rep(c(a,b),n)
-    shuffled <- sample(shuffled,length(shuffled))
-    a.random <- colMeans(matrix(shuffled[1:(length(a)*n)],nrow=length(a),ncol=n))
-    b.random <- colMeans(matrix(shuffled[(length(a)*n+1):length(shuffled)],nrow=length(b),ncol=n))
-    diff.random <- c(scale(b.random-a.random,scale=F),diff.observed)
-    p.value <- round(sum(abs(diff.random) >= abs(diff.observed)) / (n+1), floor(log10((n+1))))
-    #Output
-    if (dist==F){data.frame(diff.observed,p.value)}
-    else if (dist==T){
-      list("dist" = diff.random,
-           "diff.observed" = diff.observed,
-           "p.value" = p.value)
-    }
-  }
-  else if (paired==T) {
-    diff.sample <- b - a
-    shuffled <- rep(diff.sample,(n-1))
-    shuffled <- sample(shuffled,length(shuffled))
-    diff.random <- c(colMeans(matrix(shuffled,nrow=length(a),ncol=(n-1))),diff.observed)
-    diff.95ci <- c(sort(diff.random)[(n*0.025)],sort(diff.random)[(n*0.975)])
-    p.value <- ifelse((sign(diff.95ci[1])==sign(diff.95ci[2]))==T,"< 0.05","> 0.05")
-    #Output
-    if (dist==F){
-      as.data.frame(list(
-        "diff.observed" = diff.observed,
-        "ci.2.5" = diff.95ci[1],
-        "ci.97.5" = diff.95ci[2],
-        "p.value" = p.value))
-    }
-    else if (dist==T) {
-      list("dist" = diff.random, #bootstrapped distribution
-           "obs" = diff.observed, #observed difference in means
-           "ci.2.5" = diff.95ci[1], # 2.5 percentile
-           "ci.97.5" = diff.95ci[2], # 97.5 percentile
-           "p" = p.value) #two-tailed p value
-    }
-  }
-}
-
-
 #' Implementation of the balanced bootstrap for one or two samples
 #' 
 #' This function performs a balanced bootstrap on one or two samples If only one sample is provided, its bootstrapped distribution is compared against 
