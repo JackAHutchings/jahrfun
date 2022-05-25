@@ -262,23 +262,28 @@ bal.boot <- function(a,
                      stat.function=mean,
                      paired=F){
   
-  if(!is.na(b) & paired & (length(a) != length(b))){stop("You indicated paired data but the length of a is not equal to b")}
+  a <- na.omit(a)
+  b <- na.omit(b)
+  
+  if (length(b) == 0){b = NA}
+  
+  if(paired & (length(a) != length(b))){stop("You indicated paired data but the length of a is not equal to b")}
   if(length(asd) > 1 & length(asd) != length(a)){stop("asd must either be a single value or a vector of length equal to a")}
   if(length(bsd) > 1 & length(bsd) != length(b)){stop("bsd must either be a single value or a vector of length equal to b")}
   if(ci.width < 1 | ci.width > 100){stop("ci.width must be between 1 and 100")}
   if(length(a) == 1){stop("a has a length of 1!")}
   if(!is.numeric(a)){stop("a is non-numeric!")}
-  if(!is.na(asd) & !is.numeric(asd)){stop("asd is non-numeric!")}
-  if(!is.na(b) & !is.numeric(b)){stop("b is non-numeric!")}
-  if(!is.na(bsd) & !is.numeric(bsd)){stop("bsd is non-numeric!")}
+  if(!anyNA(asd) & !is.numeric(asd)){stop("asd is non-numeric!")}
+  if(!anyNA(b) & !is.numeric(b)){stop("b is non-numeric!")}
+  if(!anyNA(bsd) & !is.numeric(bsd)){stop("bsd is non-numeric!")}
   
-  if(is.na(asd)){asd = 0}
-  if(is.na(bsd)){bsd = 0}
+  if(anyNA(asd)){asd = 0}
+  if(anyNA(bsd)){bsd = 0}
   
   ci.lower = (100-ci.width)/2/100
   ci.upper = 1-ci.lower
   
-  if(is.na(b)){
+  if(anyNA(b)){
     data <- data.frame(a = a, asd = asd) %>% 
       rowwise() %>% 
       mutate(rep = list(data.frame(dist = rnorm(n=n,mean=a,sd=asd), rep = 1:n))) %>% 
@@ -297,7 +302,7 @@ bal.boot <- function(a,
                 p.value = ifelse(sign(lower-null)==sign(upper-null),paste0("p < ",ci.lower*2),paste0("p > ",ci.lower*2)))
   }
   
-  if(!is.na(b) & paired){
+  if(!anyNA(b) & paired){
     data = data.frame(a=a,asd=asd,b=b,bsd=bsd) %>% 
       rowwise() %>% 
       mutate(rep = list(data.frame(a.dist = rnorm(n=n,mean=a,sd=asd),
