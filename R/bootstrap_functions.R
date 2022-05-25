@@ -13,6 +13,7 @@
 #' @param ci.width Width of the confidence interval to use for hypothesis testing, a single numeric value between 1 and 100
 #' @param method Regression method. Either 'ols" for Ordinary Least Squares, 'ma' for Major Axis, or 'rma' for Reduced Major Axis.
 #' @param pred.band Compute the prediction interval? This is computationally intensive, especially for large datasets.
+#' @param pred.limits Lower and upper limits of the prediction interval. By default, these are the limits of the observed x-axis data.
 #' @param pred.steps # of steps to calculate the prediction interval at. Increase for higher resolution at cost of computation time.
 #' @export
 lm.bal <- function(x,
@@ -23,6 +24,7 @@ lm.bal <- function(x,
                    ci.width=95,
                    method=c("ols","ma","rma"),
                    pred.band = T,
+                   pred.limits = c(NA,NA),
                    pred.steps = 25){
 
   if(length(x) != length(y)){stop("x and y lengths not equal")}
@@ -78,18 +80,22 @@ lm.bal <- function(x,
            r2.upper = sort(r2)[upper*n])
   
   if(pred.band){
+    
+    pred.lower = ifelse(is.na(pred.limits[1]),min(x),pred.limits[1])
+    pred.upper = ifelse(is.na(pred.limits[2]),max(x),pred.limits[2])
+    
     conf.band = data %>%
-      mutate(x = list(seq(min(x),max(x),((max(x)-min(x))/pred.steps)))) %>%
+      mutate(x = list(seq(pred.lower,pred.upper,((pred.upper-pred.lower)/pred.steps)))) %>%
       unnest(x) %>%
       group_by(rep,x) %>%
       summarize(prediction = slope * x + intercept) %>%
       group_by(x) %>%
-      summarize(prediction.observed = mean(prediction),
+      summarize(prediction.observed = observed$slope * x + observed$intercept,
                 prediction.lower = sort(prediction)[lower*n],
                 prediction.upper = sort(prediction)[upper*n])
   } else if(!pred.band){
     conf.band = data.frame(x = x) %>%
-      mutate(prediction.observed = x * data$slope.observed[1] + data$intercept.observed[1],
+      mutate(prediction.observed = x * observed$slope + observed$intercept[1],
              prediction.lower = NA,
              prediction.upper = NA)
   }
@@ -262,23 +268,28 @@ bal.boot <- function(a,
                      stat.function=mean,
                      paired=F){
   
-  if(!is.na(b) & paired & (length(a) != length(b))){stop("You indicated paired data but the length of a is not equal to b")}
+  a <- na.omit(a)
+  b <- na.omit(b)
+  
+  if (length(b) == 0){b = NA}
+  
+  if(paired & (length(a) != length(b))){stop("You indicated paired data but the length of a is not equal to b")}
   if(length(asd) > 1 & length(asd) != length(a)){stop("asd must either be a single value or a vector of length equal to a")}
   if(length(bsd) > 1 & length(bsd) != length(b)){stop("bsd must either be a single value or a vector of length equal to b")}
   if(ci.width < 1 | ci.width > 100){stop("ci.width must be between 1 and 100")}
   if(length(a) == 1){stop("a has a length of 1!")}
   if(!is.numeric(a)){stop("a is non-numeric!")}
-  if(!is.na(asd) & !is.numeric(asd)){stop("asd is non-numeric!")}
-  if(!is.na(b) & !is.numeric(b)){stop("b is non-numeric!")}
-  if(!is.na(bsd) & !is.numeric(bsd)){stop("bsd is non-numeric!")}
+  if(!anyNA(asd) & !is.numeric(asd)){stop("asd is non-numeric!")}
+  if(!anyNA(b) & !is.numeric(b)){stop("b is non-numeric!")}
+  if(!anyNA(bsd) & !is.numeric(bsd)){stop("bsd is non-numeric!")}
   
-  if(is.na(asd)){asd = 0}
-  if(is.na(bsd)){bsd = 0}
+  if(anyNA(asd)){asd = 0}
+  if(anyNA(bsd)){bsd = 0}
   
   ci.lower = (100-ci.width)/2/100
   ci.upper = 1-ci.lower
   
-  if(is.na(b)){
+  if(anyNA(b)){
     data <- data.frame(a = a, asd = asd) %>% 
       rowwise() %>% 
       mutate(rep = list(data.frame(dist = rnorm(n=n,mean=a,sd=asd), rep = 1:n))) %>% 
@@ -297,7 +308,7 @@ bal.boot <- function(a,
                 p.value = ifelse(sign(lower-null)==sign(upper-null),paste0("p < ",ci.lower*2),paste0("p > ",ci.lower*2)))
   }
   
-  if(!is.na(b) & paired){
+  if(!anyNA(b) & paired){
     data = data.frame(a=a,asd=asd,b=b,bsd=bsd) %>% 
       rowwise() %>% 
       mutate(rep = list(data.frame(a.dist = rnorm(n=n,mean=a,sd=asd),
