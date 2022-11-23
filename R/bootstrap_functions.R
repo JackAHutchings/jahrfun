@@ -90,7 +90,7 @@ lm.bal <- function(x,
       group_by(rep,x) %>%
       summarize(prediction = slope * x + intercept) %>%
       group_by(x) %>%
-      summarize(prediction.observed = observed$slope * x + observed$intercept,
+      summarize(prediction.observed = unique(observed$slope * x + observed$intercept),
                 prediction.lower = sort(prediction)[lower*n],
                 prediction.upper = sort(prediction)[upper*n])
   } else if(!pred.band){
