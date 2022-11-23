@@ -29,6 +29,7 @@ geom_lmboot(
   show.pred.band = F,
   fill = "blue",
   pred.alpha = 0.25,
+  pred.limits = c(NA, NA),
   pred.steps = 25,
   fontsize = 6,
   coef.digits = 2,

@@ -14,6 +14,7 @@ GeomLMBoot <- ggproto("GeomLMBoot",Geom,
                                             ci.width, # Confidence interval width (%)
                                             fill, # Color of the prediction interval
                                             pred.alpha, # Alpha (opacity) of the prediction interval
+                                            pred.limits, # User-imposed limits of the prediction interval.
                                             pred.steps, # of steps to calculate the 95% prediction interval at. Increase for higher resolution at cost of computation time.
                                             m, # Should the slope be printed?
                                             m.95, # Should the slope 95% CI be printed?
@@ -44,7 +45,8 @@ GeomLMBoot <- ggproto("GeomLMBoot",Geom,
                                              method = method,
                                              ci.width= ci.width,
                                              pred.band = show.pred.band,
-                                             pred.steps = pred.steps)
+                                             pred.steps = pred.steps,
+                                             pred.limits = pred.limits)
 
                         model <- full_model$tidy
                         regression <- full_model$conf.band
@@ -272,6 +274,7 @@ geom_lmboot <- function(mapping = NULL,
                         show.pred.band=F,
                         fill="blue",
                         pred.alpha=0.25,
+                        pred.limits=c(NA,NA),
                         pred.steps=25,
                         fontsize=6,
                         coef.digits=2,
@@ -299,6 +302,7 @@ geom_lmboot <- function(mapping = NULL,
                       ci.width=ci.width,
                       fill=fill,
                       pred.alpha=pred.alpha,
+                      pred.limits=pred.limits,
                       pred.steps=pred.steps,
                       fontsize=fontsize*5/14,
                       coef.digits=coef.digits,
