@@ -13,6 +13,7 @@ lm.bal(
   ci.width = 95,
   method = c("ols", "ma", "rma"),
   pred.band = T,
+  pred.limits = c(NA, NA),
   pred.steps = 25
 )
 }
@@ -32,6 +33,8 @@ lm.bal(
 \item{method}{Regression method. Either 'ols" for Ordinary Least Squares, 'ma' for Major Axis, or 'rma' for Reduced Major Axis.}
 
 \item{pred.band}{Compute the prediction interval? This is computationally intensive, especially for large datasets.}
+
+\item{pred.limits}{Lower and upper limits of the prediction interval. By default, these are the limits of the observed x-axis data.}
 
 \item{pred.steps}{# of steps to calculate the prediction interval at. Increase for higher resolution at cost of computation time.}
 }

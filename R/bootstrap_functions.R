@@ -95,7 +95,7 @@ lm.bal <- function(x,
                 prediction.upper = sort(prediction)[upper*n])
   } else if(!pred.band){
     conf.band = data.frame(x = x) %>%
-      mutate(prediction.observed = x * observed$slope + observed$intercept[1],
+      mutate(prediction.observed = x * observed$slope + observed$intercept,
              prediction.lower = NA,
              prediction.upper = NA)
   }
