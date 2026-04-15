@@ -4,5 +4,5 @@ bibentry(
   author = person(c("Jack","A."), "Hutchings", role = "aut",email = "jahutch2@gmail.com"),
   year = {2026},
   url = "https://github.com/JackAHutchings/jahrfun",
-  doi = "10.5281/zenodo.19596456"
+  doi = "10.5281/zenodo.19596799"
 )
