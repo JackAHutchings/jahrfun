@@ -8,8 +8,8 @@ jah_settings <- function(){
   base_font_size = 8 # Default Font size in points.
   base_font_family = "serif" # Default font family.
 
-  theme_set(theme(line = element_line(color="black",size=0.25,linetype=1,lineend="butt",arrow=F,inherit.blank=T),
-                  rect = element_rect(fill=NA,color="black",size=0.25,linetype=1,inherit.blank=T),
+  theme_set(theme(line = element_line(color="black",linewidth=0.25,linetype=1,lineend="butt",arrow=F,inherit.blank=T),
+                  rect = element_rect(fill=NA,color="black",linewidth=0.25,linetype=1,inherit.blank=T),
                   text = element_text(family=base_font_family,face="plain",color="black",size=base_font_size,hjust=0.5,vjust=0.5,
                                       angle=0,lineheight=0.9,margin=margin(0,0,0,0),debug=F),
                   axis.title.x = element_text(margin=margin(2.75,0,0,0),inherit.blank = T),
@@ -21,9 +21,9 @@ jah_settings <- function(){
                   axis.text.x.top = element_text(vjust=0,margin=margin(0,0,0.75,0),inherit.blank = T),
                   axis.text.y = element_text(hjust=1,margin=margin(0,0.75,0,0),inherit.blank = T),
                   axis.text.y.right = element_text(hjust=0,margin=margin(0,0,0,0.75),inherit.blank = T),
-                  axis.ticks = element_line(size=0.2,inherit.blank = T),
-                  axis.ticks.x = element_line(size=0.2,inherit.blank = T),
-                  axis.ticks.y = element_line(size=0.2,inherit.blank = T),
+                  axis.ticks = element_line(linewidth=0.2,inherit.blank = T),
+                  axis.ticks.x = element_line(linewidth=0.2,inherit.blank = T),
+                  axis.ticks.y = element_line(linewidth=0.2,inherit.blank = T),
                   axis.ticks.length = unit(1),
                   axis.line = element_line(inherit.blank = T),
                   axis.line.x = element_line(inherit.blank = T),

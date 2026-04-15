@@ -1,0 +1,8 @@
+bibentry(
+  bibtype = "Manual",
+  title = "jahrfun: A collection of bootstrap functions, ggplot2 visualization additions, and data wrangling helpers.",
+  author = person(c("Jack","A."), "Hutchings", role = "aut",email = "jahutch2@gmail.com"),
+  year = {2026},
+  url = "https://github.com/JackAHutchings/jahrfun",
+  doi = "10.5281/zenodo.19596456"
+)

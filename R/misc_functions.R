@@ -44,3 +44,13 @@ left <- function(x, n) {
 right <- function(x, n) {
   substr(x, nchar(x) - (n-1), nchar(x))
 }
+
+#' Bins a vector via rounding to the nearest bin.
+#' 
+#' @param x A numeric vector.
+#' @param bin Bin to round towards.
+#' 
+#' @export
+bin_round <- function(x,bin){
+  if(unique(bin == 0)){x}else{round(x/bin) * bin}
+}

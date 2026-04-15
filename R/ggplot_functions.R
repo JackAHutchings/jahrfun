@@ -351,12 +351,14 @@ mean_ci_dist <- function(x,ci=95){
 #' @export
 geom_lm <- function(...,formula=y~x,method=lm,se=F){ggplot2::geom_smooth(...,formula=formula,method=method,se=se)}
 
-#' Editted ggsave2 from cowplot function.
-#'
 #' Edit of ggplot save (actually the cowplot implementation ggsave2) that includes some sensible defaults, defaults units to mm,
 #' and uses ImageMagick to trim whitespace from an exported png.
+#' 
+#' Intended usage with ImageMagick is to have a set aspect ratio within ggplot (aspect.ratio entry in theme()) and define only
+#' a width (or height) for the saved plot. This will then dynamically trim whitespace for the unspecified dimension.
+#' 
 #' @export
-ggsave <- function(
+ggsave3 <- function(
     filename, plot = ggplot2::last_plot(), device = NULL,
     path = NULL, scale = 1, width = NA, height = NA,
     units = c("mm"), dpi = 600, limitsize = TRUE, border=50, ...){
@@ -600,4 +602,33 @@ geom_lmfreq <- function(mapping = NULL,
                       nudge_y=nudge_y,
                       ...)
   )
+}
+
+#' A ggplot2 continuous axis transformation used to compress (or expand) a portion of the axis according to a multiplier. 
+#' Specifically written to be used as a scale_continuous 'transform' parameter option. 
+#'
+#' @param from Axis value to begin the transformation.
+#' @param to Axis vaoue to end the transformation.
+#' @param factor Multiplication factor. Values >1 compress and values <1 expand the from/to region of the axis.
+#' @param base_trans Allows usage with base ggplot2 transform options. These may work oddly when combined so take care.
+#'
+#' @export
+squash_axis <- function(from, to, factor, base_trans = identity_trans()) {
+  bt <- if (is.character(base_trans)) as.trans(base_trans) else base_trans
+  trans <- function(x) {
+    isq <- x > from & x < to & !is.na(x)
+    ito <- x >= to             & !is.na(x)
+    x[isq] <- from + (x[isq] - from) / factor
+    x[ito] <- from + (to - from) / factor + (x[ito] - to)
+    return(bt$transform(x))      # base transform applied after squash
+  }
+  inv <- function(x) {
+    x <- bt$inverse(x)           # base inverse applied before unsquash
+    isq <- x > from & x < from + (to - from) / factor & !is.na(x)
+    ito <- x >= from + (to - from) / factor            & !is.na(x)
+    x[isq] <- from + (x[isq] - from) * factor
+    x[ito] <- to + (x[ito] - (from + (to - from) / factor))
+    return(x)
+  }
+  return(trans_new("squash_axis", trans, inv))
 }

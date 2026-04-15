@@ -366,3 +366,191 @@ bal.boot <- function(a,
        "stat.function" = stat.function, # Summary statistic function
        "input" = input) #the a and b input data
 }
+
+#' Implementation of a one-way ANOVA balanced bootstrap with a balanced bootstrapped Bonferonni-corrected post-hoc test.
+#' 
+#' The one-way ANOVA bootstrap approach here is, broadly, based on David C. Howell's website (https://www.uvm.edu/~statdhtx/StatPages/Resampling/Resampling.html)
+#' whose primary source material is this book: Efron, B. & Tibshirani, R. J. (1993). An introduction to the bootstrap. London: Chapman & Hall.
+#' The general approach of constructing this null distribution is mentioned in that book and is used elsewhere in the peer-reviewed literature.
+#' Briefly, the concept of this test is that we calculate an observed F ratio for the data. Rather than reference that F ratio to a look-up table,
+#' we construct our own look-up table based on the characteristics of our data. To do this, we resample the data in an ungrouped fashion, slice the samples
+#' into bootstrap replicates the size of the original data set and then assign the original group identities to the now shuffled data. This is, essentially,
+#' what our null hypothesis is: what if each group actually came from a single population? Then if we shuffle the group identities randomly and perform the model,
+#' then the bootstrapped F ratio will have the same variance between the groups as the original grouping. The hypothesis test is, then, counting the proportion
+#' of bootstrapped F ratios that are *more* extreme than the observed. A p = 0.05 would indicate that 5% of the bootstrapped F ratios are more extreme than the
+#' original data structure. A potential downside or confusion is that, in the case of strong between-group differences, once shuffled it is entirely possible
+#' that it is *impossible* to have an F ratio more extreme than observed, which would result in a p-value of exactly zero. This doesn't happen with traditional
+#' lookup tables. However, the actual p-value of all tests is not particularly informative - we just want the result of whether or not the p-value is smaller
+#' than a pre-stated level of statistical power, which will typically be p = 0.05.
+#' 
+#' A pairwise balanced bootstrap is performed as a post-hoc test for each unique pairing of the levels of the input 'x' variable of your formula.
+#' A Bonferroni procedure is baked in that expands the bootstrap confidence intervals based on the number of comparisons.
+#' The 'bal.boot' function is used to perform each bootstrap.
+#' 
+#' The 'balanced' notion used here is taken from "Efficient bootstrap simulation" by Davison et al. 1986 Biometrika, Volume 73, Issue 3, December 1986, Pages 555–566, 
+#' https://doi.org/10.1093/biomet/73.3.555
+#' 
+#' 
+#' @section Output:
+#' This function returns a named list as the result:
+#' \itemize{
+#' \item tidy.data - Summary statistics of the bootstrapped distribution
+#' \item data - The complete bootstrap distribution(s) summarized at the replicate level using stat.function
+#' \item parameters - The input parameters of the function
+#' \item stat.function - The actual function used as the sampling statistic
+#' \item input - The input data
+#' }
+#'
+#' @param formula A formula in the linear model sense. This is coded *only* for one-way ANOVA, so your formula should be y ~ x, where y is the response variable and x is the grouping variable.
+#' @param data (optional) data frame that your formula variables belong to. Only needed if you don't input the names of global vectors.
+#' @param summary.only: If TRUE, a single summary data frame is reported. If FALSE, a three-component list is reported containing these elements:
+#' \itemize{
+#' \item tidy, the aforementioned single summary data.frame
+#' \item aov, the bootstrapped distribution of F
+#' \item ph, the bootstrapped distributions of differences between each group
+#' }
+#' @param aov.n The number of bootstrap replicates to perform for the ANOVA.
+#' @param aov.center Should the group means be subtracted when forming the null distribution for the ANOVA? This eliminates odd behaviors (multi-modal distributions) when you have groups with extremely disparate means.
+#' @param aov.power What is the level of statistical significance for the anova?
+#' @param do.posthoc Boolean, whether or not to perform the pairwise comparison.
+#' @param posthoc.n The number of bootstrap replicates to perform for the posthoc testing.
+#' @param posthoc.pairing Are the entries in each group paired data?
+#' @param posthoc.function Summary statistic to estimate.
+#' @param posthoc.power What is the level of statistical significance for the pairwise bootstrap? A Bonferroni procedure adjusts this for each test.
+#'
+#' @export
+aov.bal.boot <- function(formula,data=NULL,summary.only=T,aov.n=10000,aov.center=TRUE,aov.power = 0.05,
+                         do.posthoc = T,posthoc.n = 10000,posthoc.pairing = FALSE,posthoc.function = mean,posthoc.power = 0.05)
+{    
+  input_data <- model.frame(formula, data = data,na.action = na.pass) |> 
+    as.data.frame() |> 
+    setNames(nm=c("y","x")) 
+  
+  y = input_data$y
+  x = input_data$x
+  
+  #The One-Way ANOVA
+  {
+    # Manual calculation of the F ratio. Same result as anova(lm(y~x))$`F value`
+    anova_observed <- data.frame(x = x, y = y) |> 
+      mutate(total_sum_of_squares = sum((y - mean(y))^2)) |> 
+      group_by(x) |> 
+      mutate(grouped_sum_of_squares = sum((y - mean(y))^2)) |> 
+      ungroup() |> 
+      mutate(error_sum_of_squares = sum(grouped_sum_of_squares[!duplicated(x)]),
+             model_sum_of_squares = total_sum_of_squares - error_sum_of_squares,
+             mean_square_for_treatments = model_sum_of_squares / (length(unique(x))-1),
+             mean_square_for_error = error_sum_of_squares / (n() - (length(unique(x)))),
+             observed_F = mean_square_for_treatments / mean_square_for_error) %>% 
+      select(-c(x,y,grouped_sum_of_squares)) %>% distinct()
+    
+    F_observed <- anova_observed |> pull(observed_F)
+    
+    # Bootstrap resampling to generate a null distribution of F
+    F_bootstrap <- data.frame(x = x,y = y) |> 
+      group_by(x) |> 
+      mutate(y_centered = y - ifelse(aov.center,mean(y),0)) |> 
+      ungroup() |> 
+      select(y_centered) |> 
+      mutate(rep = list(1:aov.n)) |> 
+      unnest(rep) |> ungroup() |> 
+      slice_sample(prop=1) |> 
+      group_by(rep) |> 
+      mutate(x = x) |> 
+      arrange(rep,y_centered) |> 
+      mutate(total_sum_of_squares = sum((y_centered - mean(y_centered))^2)) |> 
+      group_by(rep,x) |> 
+      mutate(grouped_sum_of_squares = sum((y_centered - mean(y_centered))^2)) |> 
+      group_by(rep) |> 
+      mutate(error_sum_of_squares = sum(grouped_sum_of_squares[!duplicated(x)]),
+             model_sum_of_squares = total_sum_of_squares - error_sum_of_squares,
+             mean_square_for_treatments = model_sum_of_squares / (length(unique(x))-1),
+             mean_square_for_error = error_sum_of_squares / (n() - (length(unique(x)))),
+             F_boot = mean_square_for_treatments / mean_square_for_error) |> 
+      select(rep,total_sum_of_squares,error_sum_of_squares:F_boot) |> 
+      distinct()
+    
+    # The p-value simply asks what proportion of the bootstrapped F distribution exceeds the observed F.
+    F_bootstrap_results <- F_bootstrap |> ungroup() |> 
+      summarize(aov_critical_F = sort(F_boot)[0.95 *aov.n], # If the 95% CI of F, aka critical_F <= observed_F, then the result is significant at the p=0.05 level.
+                aov_observed_F = F_observed,
+                aov_p_value = length(F_boot[which(F_boot >= aov_observed_F)]) / aov.n) |> 
+      mutate(aov_p_value = ifelse(aov_p_value <= aov.power,paste0("p < ",aov.power),paste0("p > ",aov.power)))
+  }
+  
+  #Pairwise Two-Sample Bootstrap
+  if(do.posthoc){
+    if(summary.only){
+      pairs <- as.data.frame(do.call(rbind, combn(unique(as.character(x)),2,simplify=F))) %>% 
+        mutate(pair = paste0(V1," - ",V2)) %>% 
+        gather(col,x,-pair) %>% 
+        full_join(input_data %>% group_by(x) %>% mutate(index = 1:n()),by="x",relationship="many-to-many") %>% 
+        arrange(pair) %>% 
+        mutate(family_size = length(unique(pair))) %>% 
+        group_by(pair,family_size) %>% 
+        select(-x) %>% 
+        spread(col,y) %>% 
+        summarize(bal.boot(a = V1,
+                           b = V2,
+                           n = posthoc.n,
+                           ci.width = 100 * (1 - (posthoc.power / family_size[1])),
+                           paired = posthoc.pairing,
+                           stat.function = posthoc.function)$tidy) |> 
+        mutate(critical_p = signif(posthoc.power/family_size,digits=2),
+               p.value = ifelse(grepl("<",p.value),paste0("p < ",critical_p),paste0("p > ",critical_p))) |> 
+        select(-c(family_size,critical_p)) |> 
+        setNames(c("ph_pair","ph_mean","ph_median","ph_sd","ph_lower","ph_upper","ph_p_value"))
+      
+      ph.dist <- NULL
+    } else if(!summary.only) {
+      nested_pairs <- as.data.frame(do.call(rbind, combn(unique(as.character(x)),2,simplify=F))) %>% 
+        mutate(pair = paste0(V1," - ",V2)) %>% 
+        gather(col,x,-pair) %>% 
+        full_join(input_data %>% group_by(x) %>% mutate(index = 1:n()),by="x",relationship="many-to-many") %>% 
+        arrange(pair) %>% 
+        mutate(family_size = length(unique(pair))) %>% 
+        group_by(pair,family_size) %>% 
+        select(-x) %>% 
+        spread(col,y) %>% 
+        summarize(results = list(bal.boot(a = V1,
+                                          b = V2,
+                                          n = posthoc.n,
+                                          ci.width = 100 * (1 - (posthoc.power / family_size[1])),
+                                          paired = posthoc.pairing,
+                                          stat.function = posthoc.function))) |> 
+        unnest(results)
+      
+      pairs <- nested_pairs |> 
+        group_by(pair) |> 
+        mutate(result_type = c("tidy","data","params","fun","input")) |> 
+        spread(result_type,results) |> 
+        select(pair,family_size,tidy) |> 
+        unnest(tidy) |> 
+        mutate(critical_p = signif(posthoc.power/family_size,digits=2),
+               p.value = ifelse(grepl("<",p.value),paste0("p < ",critical_p),paste0("p > ",critical_p))) |> 
+        select(-c(family_size,critical_p)) |> 
+        setNames(c("ph_pair","ph_mean","ph_median","ph_sd","ph_lower","ph_upper","ph_p_value"))
+      
+      ph.dist <- nested_pairs |> 
+        group_by(pair) |> 
+        mutate(result_type = c("tidy","data","params","fun","input")) |> 
+        spread(result_type,results) |> 
+        select(pair,family_size,data) |> 
+        unnest(data) |> 
+        select(pair,rep,diff)
+    }
+    
+    ## You can compare to a traditional pairwise t-test with similar Bonferroni procedure.
+    # pairwise.t.test(y , x, p.adjust.method = "bonferroni")
+  } else {
+    pairs = NULL
+    ph.dist = NULL
+  }
+  
+  tidy <- bind_cols(F_bootstrap_results,pairs)
+  aov <- F_bootstrap |> mutate(F_observed = F_observed)
+  ph <- ph.dist
+  
+  if(summary.only){return(list(tidy = tidy))}
+  if(!summary.only){return(list(tidy = tidy,aov = aov, ph = ph))}
+}
